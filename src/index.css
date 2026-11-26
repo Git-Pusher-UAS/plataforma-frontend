@@ -1,4 +1,4 @@
-root {
+:root {
 /* Color */--sai-crema:    #FBF6EF;  
 /* fondo general */--sai-lila:     #F3EEFB;  
 /* superficies */--sai-lavanda:  #CDBDF0;  
@@ -20,48 +20,315 @@ root {
 /* Forma */--sai-radio-campo: 12px;--sai-radio-tarjeta: 20px;--sai-radio-boton: 999px;--sai-sombra: 0 8px 24px rgba(53,36,79,.10);
 }
 
-body { 
-  background: var(--sai-crema); 
+/* CSS Base */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--sai-crema);
   color: var(--sai-ciruela);
-  font: 17px/1.6 var(--sai-sans); }
-
-h1,h2,h3 { 
-  font-family: var(--sai-serif); 
-  font-weight: 600; 
-  line-height: 1.08; 
+  font: 17px/1.6 var(--sai-sans);
 }
 
-.boton { 
-  background: var(--sai-violeta); 
-  color: #fff; min-height: 48px;
-  padding: 0 24px; border-radius: var(--sai-radio-boton); 
-  font-weight: 700; 
+h1, h2, h3 {
+  font-family: var(--sai-serif);
+  font-weight: 600;
+  line-height: 1.08;
+  margin: 0 0 .5em;
+}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; font-weight: 700; }
+
+a { color: var(--sai-violeta); }
+
+:focus-visible {
+  outline: 3px solid var(--sai-violeta);
+  outline-offset: 2px;
 }
 
-.boton-ayuda { 
+.texto-suave { color: var(--sai-suave); }
+
+.etiqueta-peque {
+  font: 700 12px/1 var(--sai-sans);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--sai-suave);
+}
+
+.cifra {
+  font-family: var(--sai-sans);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botones*/
+
+/* ---------- Botones ---------- */
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.boton,
+.boton-secundario,
+.boton-ayuda {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: var(--sai-radio-boton);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.boton {
+  background: var(--sai-violeta);
+  color: #fff;
+  border: 0;
+}
+.boton:disabled { opacity: .55; cursor: not-allowed; }
+
+.boton-secundario {
+  background: transparent;
+  color: var(--sai-violeta);
+  border: 2px solid var(--sai-violeta);
+}
+
+.boton-ayuda {
   background: var(--sai-ayuda);
-  color: #fff; min-height: 84px;
-  border-radius: var(--sai-radio-boton); font-weight: 700; 
+  color: #fff;
+  border: 0;
+  min-height: 84px;
 }
 
-.pagina { 
-  max-width: 64rem; 
-  margin: 0 auto; 
+/*Barra superior: Menú, etc. */
+
+.barra {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  border-bottom: 1px solid var(--sai-borde);
+}
+
+.barra button {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 48px;
+  padding: 0 1rem;
+  border: 1px solid var(--sai-borde);
+  border-radius: var(--sai-radio-boton);
+  background: transparent;
+  color: var(--sai-ciruela);
+  font-weight: 700;
+}
+
+/* Página y actualizaciones */
+
+.pagina {
+  max-width: 64rem;
+  margin: 0 auto;
   padding: 1rem;
 }
 
-.barra {
-  display: flex; justify-content: flex-end; gap: .5rem;
-  padding: .5rem 1rem; border-bottom: 1px solid var(--borde);
+.aviso {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  padding: .75rem 1rem;
+  border: 1px solid var(--sai-borde);
+  border-radius: var(--sai-radio-tarjeta);
+  background: #fff;
+  box-shadow: var(--sai-sombra);
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
 }
 
-button {
-  font: inherit; cursor: pointer; padding: .5rem .9rem;
-  border: 1px solid var(--borde); border-radius: .5rem;
-  background: transparent; color: var(--texto);
+/* Panel de personal: **** A CONSIDERAR *****
+
+div class="panel">
+       <nav class="menu-lateral"> ... <a class="menu-item"> ... </nav>
+       <div class="panel-cuerpo">
+         <header class="barra"> ... </header>
+         <main class="pagina"> ... </main>
+       </div>
+     </div>
+
+*/
+
+.panel { font-size: 15px; min-height: 100dvh; }
+
+/* Menú en celular: barra lateral o inferior */
+
+.menu-lateral {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 40;
+  display: flex;
+  justify-content: space-around;
+  background: var(--sai-ciruela);
+  color: var(--sai-crema);
+  padding: .25rem .25rem calc(.25rem + env(safe-area-inset-bottom, 0px));
 }
-.aviso {
-  position: fixed; left: 1rem; right: 1rem; bottom: 1rem;
-  padding: .75rem 1rem; border: 1px solid var(--borde); border-radius: .5rem;
-  background: var(--fondo); display: flex; gap: .75rem; align-items: center; justify-content: space-between;
+
+.menu-marca { display: none; }
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .15rem;
+  min-width: 48px;
+  min-height: 48px;
+  padding: .35rem .5rem;
+  border-radius: var(--sai-radio-campo);
+  color: var(--sai-crema);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.menu-item[aria-current="page"] {
+  background: var(--sai-lavanda);
+  color: var(--sai-ciruela);
+}
+.menu-item:focus-visible { outline-color: var(--sai-lavanda); }
+
+.panel-cuerpo { padding-bottom: 5rem; } /* espacio para la barra inferior */
+
+/* Interfaz de escritorio: menú lateral y barra superior */
+
+@media (min-width: 768px) {
+  .panel { display: grid; grid-template-columns: 240px 1fr; }
+
+  .menu-lateral {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    inset: auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: .25rem;
+    padding: 1.5rem 1rem;
+  }
+
+  .menu-marca {
+    display: block;
+    font: 700 2rem/1 var(--sai-serif);
+    color: var(--sai-crema);
+    margin-bottom: 1.5rem;
+  }
+
+  .menu-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: .75rem;
+    padding: .5rem .85rem;
+    font-size: 15px;
+  }
+
+  .panel-cuerpo { padding-bottom: 0; }
+}
+
+/* Tarjetas y campos de formulario */
+
+.tarjeta {
+  background: #fff;
+  border: 1px solid var(--sai-borde);
+  border-radius: var(--sai-radio-tarjeta);
+  padding: 1.25rem;
+}
+.tarjeta-lila { background: var(--sai-lila); border-color: transparent; }
+
+.campo { display: grid; gap: .35rem; margin-bottom: 1rem; }
+.campo label { font-weight: 700; }
+.campo-ayuda { color: var(--sai-suave); font-size: 14px; }
+
+.campo input,
+.campo select,
+.campo textarea {
+  font: inherit;
+  min-height: 48px;
+  padding: .5rem .85rem;
+  border: 1px solid var(--sai-borde);
+  border-radius: var(--sai-radio-campo);
+  background: var(--sai-lila);
+  color: var(--sai-ciruela);
+}
+
+.campo-error input { border-color: var(--sai-ayuda); }
+.texto-error { color: var(--sai-ayuda); font-weight: 700; }
+
+/* Etiquetas de área */
+
+.etiqueta {
+  display: inline-block;
+  padding: .15rem .75rem;
+  border-radius: var(--sai-radio-boton);
+  font: 700 12px/1.6 var(--sai-sans);
+  color: var(--sai-ciruela);
+  background: var(--sai-lavanda);
+}
+.etiqueta-trabajo-social { background: var(--sai-lavanda); }
+.etiqueta-psicologia { background: var(--sai-rosa); }
+.etiqueta-juridico { background: var(--sai-durazno); }
+.etiqueta-capacitacion { background: var(--sai-menta); }
+.etiqueta-administracion { background: var(--sai-ciruela); color: var(--sai-crema); }
+
+/* Estados */
+
+.estado { border-radius: var(--sai-radio-campo); padding: .75rem 1rem; color: var(--sai-ciruela); }
+.estado-exito { background: var(--sai-menta); }
+.estado-aviso { background: var(--sai-durazno); }
+.estado-urgente { background: var(--sai-coral); }
+
+/* Secciones restringidas / Bloqueadas */
+
+.seccion-bloqueada {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  border: 2px dashed var(--sai-lavanda);
+  border-radius: var(--sai-radio-tarjeta);
+}
+.seccion-bloqueada-icono {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--sai-radio-campo);
+  background: var(--sai-lila);
+  color: var(--sai-violeta);
+}
+
+/* Mapa de calor */
+
+calor-1 { background: var(--sai-calor-1); color: var(--sai-ciruela); }
+.calor-2 { background: var(--sai-calor-2); color: var(--sai-ciruela); }
+.calor-3 { background: var(--sai-calor-3); color: var(--sai-ciruela); }
+.calor-4 { background: var(--sai-calor-4); color: #fff; }
+.calor-5 { background: var(--sai-calor-5); color: #fff; }
+.calor-suprimido {
+  background: repeating-linear-gradient(45deg, #fff, #fff 6px, var(--sai-lila) 6px, var(--sai-lila) 12px);
+  color: var(--sai-suave);
+}
+
+/*  Movimiento reducido  */
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }

@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import { Providers } from '@/app/providers'
 import { App } from '@/app/App'
 
-//Fonts de Google
 import '@fontsource/cormorant-garamond/500.css'
 import '@fontsource/cormorant-garamond/600.css'
 import '@fontsource/cormorant-garamond/700.css'
