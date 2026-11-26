@@ -1,26 +1,37 @@
 :root {
-/* Color */--sai-crema:    #FBF6EF;  
-/* fondo general */--sai-lila:     #F3EEFB;  
-/* superficies */--sai-lavanda:  #CDBDF0;  
-/* marca */--sai-violeta:  #6A4BA8;  
-/* acciones y enlaces */--sai-ciruela:  #35244F;  
-/* texto y menú del panel */--sai-suave:    #5E5278;  
-/* texto secundario */--sai-rosa:     #F5BCD3;  
-/* acento */--sai-durazno:  #FAD3B0; 
- /* aviso */--sai-menta:    #C4E8DA;  
- /* confirmación */--sai-coral:    #F4B3A6;  
- /* urgencia suave */--sai-ayuda:    #A63A2B;  
- /* botón de ayuda y errores */--sai-borde:    #E2D9F0;
-/* Mapa de calor (nivel 1 a 5) */--sai-calor-1: #F3EEFB;
---sai-calor-2: #CDBDF0;
---sai-calor-3: #A58AD8;
---sai-calor-4: #6A4BA8;
---sai-calor-5: #35244F;
-/* Tipografía */--sai-serif: "Cormorant Garamond", Georgia, serif;--sai-sans:  "Nunito Sans", system-ui, sans-serif;
-/* Forma */--sai-radio-campo: 12px;--sai-radio-tarjeta: 20px;--sai-radio-boton: 999px;--sai-sombra: 0 8px 24px rgba(53,36,79,.10);
+  /* Color */
+  --sai-crema: #FBF6EF;     /* fondo general */
+  --sai-lila: #F3EEFB;      /* superficies */
+  --sai-lavanda: #CDBDF0;   /* marca */
+  --sai-violeta: #6A4BA8;   /* acciones y enlaces */
+  --sai-ciruela: #35244F;   /* texto y menú del panel */
+  --sai-suave: #5E5278;     /* texto secundario */
+  --sai-rosa: #F5BCD3;      /* acento */
+  --sai-durazno: #FAD3B0;   /* aviso */
+  --sai-menta: #C4E8DA;     /* confirmación */
+  --sai-coral: #F4B3A6;     /* urgencia suave */
+  --sai-ayuda: #A63A2B;     /* botón de ayuda y errores */
+  --sai-borde: #E2D9F0;
+
+  /* Mapa de calor (nivel 1 a 5) */
+  --sai-calor-1: #F3EEFB;
+  --sai-calor-2: #CDBDF0;
+  --sai-calor-3: #A58AD8;
+  --sai-calor-4: #6A4BA8;
+  --sai-calor-5: #35244F;
+
+  /* Tipografía */
+  --sai-serif: "Cormorant Garamond", Georgia, serif;
+  --sai-sans: "Nunito Sans", system-ui, sans-serif;
+
+  /* Forma */
+  --sai-radio-campo: 12px;
+  --sai-radio-tarjeta: 20px;
+  --sai-radio-boton: 999px;
+  --sai-sombra: 0 8px 24px rgba(53, 36, 79, 0.10);
 }
 
-/* CSS Base */
+/* Base */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -63,9 +74,7 @@ a { color: var(--sai-violeta); }
   font-variant-numeric: tabular-nums;
 }
 
-/* Botones*/
-
-/* ---------- Botones ---------- */
+/* Botones */
 
 button {
   font: inherit;
@@ -106,15 +115,23 @@ button {
   min-height: 84px;
 }
 
-/*Barra superior: Menú, etc. */
+/* Barra superior */
 
 .barra {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
   gap: .5rem;
   padding: .5rem 1rem;
+  background: var(--sai-crema);
   border-bottom: 1px solid var(--sai-borde);
+}
+
+.barra-marca {
+  display: none;
+  font: 700 1.6rem/1 var(--sai-serif);
 }
 
 .barra button {
@@ -130,7 +147,7 @@ button {
   font-weight: 700;
 }
 
-/* Página y actualizaciones */
+/* Página y aviso de actualización */
 
 .pagina {
   max-width: 64rem;
@@ -155,47 +172,66 @@ button {
   z-index: 50;
 }
 
-/* Panel de personal: **** A CONSIDERAR *****
-
-div class="panel">
+/* ==========================================================================
+   Panel del personal
+   Estructura:
+     <div class="panel [menu-oculto] [menu-abierto]">
        <nav class="menu-lateral"> ... <a class="menu-item"> ... </nav>
+       <div class="menu-fondo">
        <div class="panel-cuerpo">
          <header class="barra"> ... </header>
          <main class="pagina"> ... </main>
        </div>
      </div>
+   Escritorio: menú lateral que se puede ocultar y cambiar de ancho.
+   Celular: barra superior con botón de menú; el menú es un cajón lateral
+   y la salida rápida queda fija abajo, al alcance del pulgar.
+   ========================================================================== */
 
-*/
-
-.panel { font-size: 15px; min-height: 100dvh; }
-
-/* Menú en celular: barra lateral o inferior */
+.panel { --menu-ancho: 240px; font-size: 15px; min-height: 100dvh; }
+.panel.redimensionando { user-select: none; cursor: col-resize; }
 
 .menu-lateral {
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 40;
+  position: relative;
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
+  gap: .25rem;
+  padding: 1.5rem 1rem;
   background: var(--sai-ciruela);
   color: var(--sai-crema);
-  padding: .25rem .25rem calc(.25rem + env(safe-area-inset-bottom, 0px));
 }
 
-.menu-marca { display: none; }
+.menu-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.menu-marca {
+  font: 700 2rem/1 var(--sai-serif);
+  color: var(--sai-crema);
+}
+
+.menu-cerrar {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  border: 1px solid rgba(251, 246, 239, .35);
+  border-radius: var(--sai-radio-boton);
+  background: transparent;
+  color: var(--sai-crema);
+}
 
 .menu-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: .15rem;
-  min-width: 48px;
+  gap: .75rem;
   min-height: 48px;
-  padding: .35rem .5rem;
+  padding: .5rem .85rem;
   border-radius: var(--sai-radio-campo);
   color: var(--sai-crema);
-  font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
@@ -203,45 +239,111 @@ div class="panel">
   background: var(--sai-lavanda);
   color: var(--sai-ciruela);
 }
-.menu-item:focus-visible { outline-color: var(--sai-lavanda); }
+.menu-item:focus-visible,
+.menu-cerrar:focus-visible { outline-color: var(--sai-lavanda); }
 
-.panel-cuerpo { padding-bottom: 5rem; } /* espacio para la barra inferior */
+.menu-fondo { display: none; }
 
-/* Interfaz de escritorio: menú lateral y barra superior */
+/* Asa para cambiar el ancho (solo escritorio) */
+.menu-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 5;
+}
+.menu-resize:hover,
+.menu-resize.activa { background: var(--sai-lavanda); opacity: .7; }
 
+.salida-rapida { margin-left: auto; }
+
+.barra-inferior { display: none; }
+
+/* Escritorio */
 @media (min-width: 768px) {
-  .panel { display: grid; grid-template-columns: 240px 1fr; }
+  .panel { display: grid; grid-template-columns: var(--menu-ancho) 1fr; }
+  .panel.menu-oculto { grid-template-columns: 1fr; }
+  .panel.menu-oculto .menu-lateral { display: none; }
 
-  .menu-lateral {
-    position: sticky;
-    top: 0;
-    height: 100dvh;
-    inset: auto;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: .25rem;
-    padding: 1.5rem 1rem;
-  }
-
-  .menu-marca {
-    display: block;
-    font: 700 2rem/1 var(--sai-serif);
-    color: var(--sai-crema);
-    margin-bottom: 1.5rem;
-  }
-
-  .menu-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: .75rem;
-    padding: .5rem .85rem;
-    font-size: 15px;
-  }
-
-  .panel-cuerpo { padding-bottom: 0; }
+  .menu-lateral { position: sticky; top: 0; height: 100dvh; overflow-y: auto; }
+  .barra .btn-menu-movil { display: none; }
 }
 
-/* Tarjetas y campos de formulario */
+/* Celular */
+@media (max-width: 767px) {
+  .barra .btn-menu-escritorio,
+  .menu-resize { display: none; }
+  .barra-marca { display: block; }
+
+  .menu-lateral {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    width: min(82vw, 300px);
+    overflow-y: auto;
+    padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform .2s ease, visibility .2s;
+  }
+  .menu-cerrar { display: inline-flex; }
+
+  .panel.menu-abierto .menu-lateral { transform: none; visibility: visible; }
+  .panel.menu-abierto .menu-fondo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(53, 36, 79, .45);
+  }
+
+  /* Inicio y Ayuda viven en la barra inferior*/
+  .menu-lateral .oculto-en-movil { display: none; }
+
+  /* Barra inferior: Inicio, Mapa de calor y Ayuda */
+  .barra-inferior {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 45;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .25rem;
+    padding: .25rem .5rem calc(.25rem + env(safe-area-inset-bottom, 0px));
+    background: var(--sai-ciruela);
+  }
+  .barra-inferior a,
+  .barra-inferior button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .15rem;
+    min-height: 56px;
+    border: 0;
+    border-radius: var(--sai-radio-campo);
+    background: transparent;
+    color: var(--sai-crema);
+    font: 700 12px/1.2 var(--sai-sans);
+    text-align: center;
+    text-decoration: none;
+  }
+  .barra-inferior a[aria-current="page"] {
+    background: var(--sai-lavanda);
+    color: var(--sai-ciruela);
+  }
+  .barra-inferior a:focus-visible,
+  .barra-inferior button:focus-visible { outline-color: var(--sai-lavanda); }
+
+  .panel-cuerpo { padding-bottom: 6rem; }
+  .aviso { bottom: calc(6rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Tarjetas y campos */
 
 .tarjeta {
   background: #fff;
@@ -270,7 +372,7 @@ div class="panel">
 .campo-error input { border-color: var(--sai-ayuda); }
 .texto-error { color: var(--sai-ayuda); font-weight: 700; }
 
-/* Etiquetas de área */
+/* Etiquetas de área (junto al nombre de la persona) */
 
 .etiqueta {
   display: inline-block;
@@ -293,7 +395,7 @@ div class="panel">
 .estado-aviso { background: var(--sai-durazno); }
 .estado-urgente { background: var(--sai-coral); }
 
-/* Secciones restringidas / Bloqueadas */
+/* Sección restringida: bloqueada, nunca oculta en silencio */
 
 .seccion-bloqueada {
   display: flex;
@@ -317,7 +419,7 @@ div class="panel">
 
 /* Mapa de calor */
 
-calor-1 { background: var(--sai-calor-1); color: var(--sai-ciruela); }
+.calor-1 { background: var(--sai-calor-1); color: var(--sai-ciruela); }
 .calor-2 { background: var(--sai-calor-2); color: var(--sai-ciruela); }
 .calor-3 { background: var(--sai-calor-3); color: var(--sai-ciruela); }
 .calor-4 { background: var(--sai-calor-4); color: #fff; }
@@ -327,7 +429,7 @@ calor-1 { background: var(--sai-calor-1); color: var(--sai-ciruela); }
   color: var(--sai-suave);
 }
 
-/*  Movimiento reducido  */
+/* Movimiento reducido */
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
