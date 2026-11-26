@@ -1,0 +1,23 @@
+# Ganchos locales. Instalación: instalar lefthook (brew/scoop/npm global) y ejecutar `lefthook install`.
+# Los ganchos son una ayuda, no una barrera: la integración continua repite las comprobaciones.
+commit-msg:
+  commands:
+    mensaje-convencional:
+      run: sh scripts/check-commit-msg.sh {1}
+
+pre-commit:
+  parallel: true
+  commands:
+    secretos:
+      # Requiere gitleaks instalado. Si no está, avisa y no bloquea.
+      run: sh -c 'command -v gitleaks >/dev/null 2>&1 && gitleaks protect --staged --redact || echo "AVISO: gitleaks no está instalado; no se buscaron secretos."'
+    eslint:
+      glob: "*.{ts,tsx,js}"
+      run: npx eslint {staged_files}
+
+pre-push:
+  commands:
+    tipos:
+      run: npm run typecheck
+    pruebas:
+      run: npm test

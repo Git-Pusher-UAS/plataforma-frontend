@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
+# El código generado se muestra colapsado en las solicitudes de integración
+src/api/generated/** linguist-generated=true
+package-lock.json linguist-generated=true

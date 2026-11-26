@@ -1,0 +1,13 @@
+# Sustituir los equipos por los reales de la organización.
+# Prevalece la última regla que coincide con la ruta.
+*                       @Git-Pusher-UAS/frontend
+
+# El contrato copiado lo revisan ambos lados
+/contract/              @Git-Pusher-UAS/backend @Git-Pusher-UAS/frontend
+
+# Rutas sensibles: requieren revisión de seguridad
+/src/offline/           @Git-Pusher-UAS/seguridad
+/src/pwa/               @Git-Pusher-UAS/seguridad
+/Dockerfile             @Git-Pusher-UAS/seguridad
+/Caddyfile              @Git-Pusher-UAS/seguridad
+/.github/               @Git-Pusher-UAS/seguridad

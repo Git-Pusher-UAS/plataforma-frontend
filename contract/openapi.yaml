@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: API de la plataforma
+  version: 0.1.0
+  description: >
+    Copia de trabajo inicial. Cuando exista el contrato del backend, esta carpeta se
+    sobrescribe con `make sync-contract REF=contract-vN`. No se edita a mano.
+paths:
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      summary: Estado del servicio
+      responses:
+        '200':
+          description: Servicio disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
