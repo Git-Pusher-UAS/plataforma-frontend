@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import {
   OPCIONES_VACANTE,
   TIPOS_EVENTO,
+  fechaCorta,
   fechaLarga,
   hora12,
   partesFecha,
@@ -214,7 +215,14 @@ export function EmpleoPage() {
                     to={`/u/empleo/${v.id}`}
                     className="tarjeta vacante tarjeta-vacante"
                   >
-                    <h3>{v.puesto}</h3>
+                    <div className="tarjeta-cabecera">
+                      <h3>{v.puesto}</h3>
+                      {v.publicadaEn && (
+                        <span className="publicada-tarjeta">
+                          Publicada el {fechaCorta(v.publicadaEn)}
+                        </span>
+                      )}
+                    </div>
                     <p className="texto-suave">
                       {v.empresa} · {v.ubicacion}
                     </p>
@@ -266,8 +274,17 @@ export function DetalleVacantePage() {
         {(v) =>
           v && (
             <>
-              <h1>{v.puesto}</h1>
-              <p className="texto-suave">{v.empresa}</p>
+              <div className="detalle-cabecera">
+                <div>
+                  <h1>{v.puesto}</h1>
+                  <p className="texto-suave">{v.empresa}</p>
+                </div>
+                {v.publicadaEn && (
+                  <span className="publicada-insignia">
+                    Publicada el {fechaCorta(v.publicadaEn)}
+                  </span>
+                )}
+              </div>
               <p className="chips">
                 <span className="chip">{v.horario}</span>
                 <span className="chip">{v.tipoEmpleo}</span>

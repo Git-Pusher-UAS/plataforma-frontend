@@ -98,9 +98,9 @@ Las rutas 🔴 siguen la convención de `PANTALLAS_ENDPOINTS_SAI_MVP.md` §6 (re
 
 | Operación | Estado | Pantallas | Qué espera la pantalla |
 |---|---|---|---|
-| `GET /jobs?sector&schedule&type&location` | 🔴 Falta | U-12, K-01, K-07 | `{ id, puesto, empresa, sector, horario, tipoEmpleo, ubicacion, descripcion, requisitos[], actualizada, postulada?, postulaciones? }` |
-| `GET /jobs/{id}` | 🔴 Falta | U-13 | Una vacante |
-| `POST /jobs` | 🔴 Falta | K-08 | Capacitación publica la vacante |
+| `GET /jobs?sector&schedule&type&location` | 🔴 Falta | U-12, K-01, K-07 | `{ id, puesto, empresa, sector, horario, tipoEmpleo, ubicacion, descripcion, requisitos[], publicadaEn?, actualizada, postulada?, postulaciones? }` |
+| `GET /jobs/{id}` | 🔴 Falta | U-13 | Una vacante con `{ ..., publicadaEn?, actualizada, ... }` |
+| `POST /jobs` | 🔴 Falta | K-08 | Capacitación publica la vacante; `publicadaEn` lo genera el servidor |
 | `POST /jobs/{id}/applications` | 🔴 Falta | U-13 | Postulación. La Secretaría hace de puente con la empresa |
 
 ## Encuestas
