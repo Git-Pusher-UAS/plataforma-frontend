@@ -317,7 +317,7 @@ div class="panel">
 
 /* Mapa de calor */
 
-calor-1 { background: var(--sai-calor-1); color: var(--sai-ciruela); }
+.calor-1 { background: var(--sai-calor-1); color: var(--sai-ciruela); }
 .calor-2 { background: var(--sai-calor-2); color: var(--sai-ciruela); }
 .calor-3 { background: var(--sai-calor-3); color: var(--sai-ciruela); }
 .calor-4 { background: var(--sai-calor-4); color: #fff; }
@@ -326,6 +326,73 @@ calor-1 { background: var(--sai-calor-1); color: var(--sai-ciruela); }
   background: repeating-linear-gradient(45deg, #fff, #fff 6px, var(--sai-lila) 6px, var(--sai-lila) 12px);
   color: var(--sai-suave);
 }
+
+.tarjeta-mapa { display: grid; gap: 1.5rem; grid-template-areas: "titulo" "mapa" "lateral"; }
+.mapa-titulo { grid-area: titulo; }
+.mapa-lienzo { grid-area: mapa; }
+.mapa-titulo, .mapa-lateral { display: grid; gap: 1rem; align-content: start; }
+.mapa-lateral { grid-area: lateral; }
+.mapa-titulo p, .mapa-lateral p { margin: 0; }
+
+@media (min-width: 1024px) {
+  .tarjeta-mapa {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "mapa titulo" "mapa lateral";
+  }
+}
+
+.mapa {
+  display: block;
+  width: 100%;
+  height: min(70dvh, 640px);
+}
+.mapa-municipio { fill: none; stroke: var(--sai-ciruela); stroke-width: 1.5; }
+.mapa-sector { stroke: #fff; stroke-width: .75; stroke-linejoin: round; }
+.mapa-sector.sin-datos, .mapa-sin-datos { fill: var(--sai-crema); background: var(--sai-crema); stroke: var(--sai-lavanda); }
+.mapa-sector.calor-1 { fill: var(--sai-calor-1); }
+.mapa-sector.calor-2 { fill: var(--sai-calor-2); }
+.mapa-sector.calor-3 { fill: var(--sai-calor-3); }
+.mapa-sector.calor-4 { fill: var(--sai-calor-4); }
+.mapa-sector.calor-5 { fill: var(--sai-calor-5); }
+.mapa-sector.suprimido { fill: url(#mapa-suprimido); }
+.mapa-sector:hover { stroke: var(--sai-ciruela); stroke-width: 1.5; }
+
+.mapa-vistas {
+  display: inline-flex;
+  justify-self: start;
+  padding: 4px;
+  border-radius: var(--sai-radio-boton);
+  background: var(--sai-lila);
+}
+.mapa-vistas button {
+  min-height: 40px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: var(--sai-radio-boton);
+  background: transparent;
+  color: var(--sai-suave);
+  font-weight: 700;
+}
+.mapa-vistas button[aria-pressed="true"] { background: var(--sai-violeta); color: #fff; }
+
+.mapa-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.mapa-leyenda li { display: flex; align-items: center; gap: .5rem; }
+.mapa-muestra {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--sai-borde);
+}
+.mapa-fuente { margin: 0; font-size: 13px; }
 
 /*  Movimiento reducido  */
 
