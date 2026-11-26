@@ -25,6 +25,7 @@ export type Vacante = {
   ubicacion: string
   descripcion: string
   requisitos: string[]
+  publicadaEn?: string
   actualizada: string
   postulada?: boolean
   postulaciones?: number
@@ -46,9 +47,9 @@ const cursos: Curso[] = [
   { id: 'cu4', tipo: 'curso', titulo: 'Repostería básica', descripcion: 'Curso práctico de cuatro sesiones para emprender desde casa.', fecha: '2027-01-08', hora: '10:00', lugar: 'Centro comunitario Jiquilpan', cupo: 15, inscritas: 15 },
 ]
 const vacantes: Vacante[] = [
-  { id: 'va1', puesto: 'Auxiliar administrativa', empresa: 'Empresa aliada A', sector: 'Servicios', horario: 'Matutino', tipoEmpleo: 'Tiempo completo', ubicacion: 'Los Mochis', descripcion: 'Apoyo en captura, archivo y atención a clientes.', requisitos: ['Secundaria terminada', 'Manejo básico de computadora'], actualizada: '2026-11-24', postulaciones: 6 },
-  { id: 'va2', puesto: 'Cajera', empresa: 'Empresa aliada B', sector: 'Comercio', horario: 'Vespertino', tipoEmpleo: 'Medio tiempo', ubicacion: 'Los Mochis', descripcion: 'Cobro en caja y acomodo de mercancía.', requisitos: ['Mayor de 18 años'], actualizada: '2026-11-22', postulaciones: 11 },
-  { id: 'va3', puesto: 'Empacadora', empresa: 'Empresa aliada C', sector: 'Agroindustria', horario: 'Matutino', tipoEmpleo: 'Temporal', ubicacion: 'Higuera de Zaragoza', descripcion: 'Selección y empaque de hortaliza en temporada.', requisitos: ['Disponibilidad de horario'], actualizada: '2026-11-20', postulaciones: 3 },
+  { id: 'va1', puesto: 'Auxiliar administrativa', empresa: 'Empresa aliada A', sector: 'Servicios', horario: 'Matutino', tipoEmpleo: 'Tiempo completo', ubicacion: 'Los Mochis', descripcion: 'Apoyo en captura, archivo y atención a clientes.', requisitos: ['Secundaria terminada', 'Manejo básico de computadora'], publicadaEn: '2026-11-18', actualizada: '2026-11-24', postulaciones: 6 },
+  { id: 'va2', puesto: 'Cajera', empresa: 'Empresa aliada B', sector: 'Comercio', horario: 'Vespertino', tipoEmpleo: 'Medio tiempo', ubicacion: 'Los Mochis', descripcion: 'Cobro en caja y acomodo de mercancía.', requisitos: ['Mayor de 18 años'], publicadaEn: '2026-11-19', actualizada: '2026-11-22', postulaciones: 11 },
+  { id: 'va3', puesto: 'Empacadora', empresa: 'Empresa aliada C', sector: 'Agroindustria', horario: 'Matutino', tipoEmpleo: 'Temporal', ubicacion: 'Higuera de Zaragoza', descripcion: 'Selección y empaque de hortaliza en temporada.', requisitos: ['Disponibilidad de horario'], publicadaEn: '2026-11-17', actualizada: '2026-11-20', postulaciones: 3 },
 ]
 const visitas: Visita[] = [
   { id: 'vi1', sector: 'Sector 12', fecha: '2026-12-03', tema: 'Prevención de la violencia en el noviazgo', responsable: 'Capacitación', estado: 'planeada' },
@@ -174,13 +175,14 @@ export function useVacante(id: string) {
 export function useCrearVacante() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (nueva: Omit<Vacante, 'id' | 'actualizada' | 'postulaciones'>) =>
+    mutationFn: (nueva: Omit<Vacante, 'id' | 'publicadaEn' | 'actualizada' | 'postulaciones'>) =>
       pedir<Vacante>({
         metodo: 'POST',
         ruta: '/jobs',
         cuerpo: nueva,
         simulado: () => {
-          const v = { ...nueva, id: `va${vacantes.length + 1}`, actualizada: new Date().toISOString().slice(0, 10), postulaciones: 0 }
+          const hoy = new Date().toISOString().slice(0, 10)
+          const v = { ...nueva, id: `va${vacantes.length + 1}`, publicadaEn: hoy, actualizada: hoy, postulaciones: 0 }
           vacantes.unshift(v)
           return v
         },
@@ -239,6 +241,11 @@ const MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'O
 export function partesFecha(iso: string) {
   const [a, m, d] = iso.split('-').map(Number)
   return { dia: d ?? 1, mes: MESES[(m ?? 1) - 1] ?? '', anio: a ?? 0 }
+}
+/** Formato corto para tarjetas y encabezados: "19 de nov". */
+export function fechaCorta(iso: string) {
+  const { dia, mes } = partesFecha(iso)
+  return `${dia} de ${mes.toLowerCase()}`
 }
 export function fechaLarga(iso: string) {
   return new Date(`${iso}T12:00:00`).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
