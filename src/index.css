@@ -133,10 +133,11 @@ button {
 /* Página y actualizaciones */
 
 .pagina {
-  max-width: 64rem;
+  max-width: 76rem;
   margin: 0 auto;
   padding: 1rem;
 }
+@media (min-width: 768px) { .pagina { padding: 1.5rem 2rem; } }
 
 .aviso {
   position: fixed;
@@ -169,42 +170,41 @@ div class="panel">
 
 .panel { font-size: 15px; min-height: 100dvh; }
 
-/* Menú en celular: barra lateral o inferior */
+/* Menú: barra inferior en celular y tablet, lateral en escritorio */
 
 .menu-lateral {
   position: fixed;
   inset: auto 0 0 0;
   z-index: 40;
   display: flex;
-  justify-content: space-around;
   background: var(--sai-ciruela);
   color: var(--sai-crema);
   padding: .25rem .25rem calc(.25rem + env(safe-area-inset-bottom, 0px));
-  /* Si las opciones no caben (pantalla baja o zoom alto), el menú se desplaza en lugar de cortarse. */
+  /* Red de seguridad: si algo no cabe (zoom alto), se desplaza en lugar de cortarse. */
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--sai-lavanda) transparent;
+  scrollbar-width: none;
 }
-.menu-lateral::-webkit-scrollbar { width: 6px; height: 6px; }
+.menu-lateral::-webkit-scrollbar { width: 6px; height: 0; }
 .menu-lateral::-webkit-scrollbar-thumb { background: var(--sai-lavanda); border-radius: 999px; }
 
 .menu-marca { display: none; }
 
 .menu-item {
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: .15rem;
-  flex: 1 0 auto; /* reparte el espacio si cabe; si no, se desplaza sin encimarse */
-  min-width: 48px;
-  min-height: 48px;
-  padding: .35rem .5rem;
+  min-width: 40px;
+  min-height: 52px;
+  padding: .35rem .25rem;
   border-radius: var(--sai-radio-campo);
   color: var(--sai-crema);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 .menu-item[aria-current="page"] {
   background: var(--sai-lavanda);
@@ -212,12 +212,24 @@ div class="panel">
 }
 .menu-item:focus-visible { outline-color: var(--sai-lavanda); }
 
-.panel-cuerpo { padding-bottom: 5rem; } /* espacio para la barra inferior */
+/* En celular las 8 opciones solo caben como íconos; el texto sigue ahí para lectores de pantalla. */
+@media (max-width: 767px) {
+  .menu-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 
-/* Interfaz de escritorio: menú lateral y barra superior */
+.panel-cuerpo { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); } /* espacio para la barra inferior */
 
-@media (min-width: 768px) {
-  .panel { display: grid; grid-template-columns: 240px 1fr; }
+/* Escritorio: menú lateral fijo */
+
+@media (min-width: 1024px) {
+  .panel { display: grid; grid-template-columns: 240px minmax(0, 1fr); }
 
   .menu-lateral {
     position: sticky;
@@ -225,9 +237,10 @@ div class="panel">
     top: 0; /* después de inset, que si no lo anula */
     height: 100dvh;
     flex-direction: column;
-    justify-content: flex-start;
     gap: .25rem;
     padding: 1.5rem 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sai-lavanda) transparent;
   }
 
   .menu-marca {
@@ -238,9 +251,11 @@ div class="panel">
   }
 
   .menu-item {
+    flex: none;
     flex-direction: row;
     justify-content: flex-start;
     gap: .75rem;
+    min-height: 48px;
     padding: .5rem .85rem;
     font-size: 15px;
   }
@@ -334,16 +349,22 @@ div class="panel">
   color: var(--sai-suave);
 }
 
-.tarjeta-mapa { display: grid; gap: 1.5rem; grid-template-areas: "titulo" "mapa" "lateral"; }
+.tarjeta-mapa { display: grid; gap: 1.25rem; grid-template-areas: "titulo" "mapa" "lateral"; }
 .mapa-titulo { grid-area: titulo; }
 .mapa-lienzo { grid-area: mapa; }
 .mapa-titulo, .mapa-lateral { display: grid; gap: 1rem; align-content: start; }
 .mapa-lateral { grid-area: lateral; }
 .mapa-titulo p, .mapa-lateral p { margin: 0; }
 
+@media (max-width: 599px) {
+  .tarjeta-mapa { padding: 1rem; }
+  .tarjeta-mapa h2 { font-size: 1.5rem; }
+}
+
 @media (min-width: 1024px) {
   .tarjeta-mapa {
-    grid-template-columns: minmax(0, 1fr) 18rem;
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: 1.5rem 2rem;
     grid-template-rows: auto 1fr;
     grid-template-areas: "mapa titulo" "mapa lateral";
   }
@@ -352,8 +373,9 @@ div class="panel">
 .mapa {
   display: block;
   width: 100%;
-  height: min(70dvh, 640px);
+  height: min(60dvh, 520px);
 }
+@media (min-width: 1024px) { .mapa { height: min(72dvh, 680px); } }
 .mapa-municipio { fill: none; stroke: var(--sai-ciruela); stroke-width: 1.5; }
 .mapa-sector { stroke: #fff; stroke-width: .75; stroke-linejoin: round; }
 .mapa-sector.sin-datos, .mapa-sin-datos { fill: var(--sai-crema); background: var(--sai-crema); stroke: var(--sai-lavanda); }
@@ -384,9 +406,9 @@ div class="panel">
 .mapa-vistas button[aria-pressed="true"] { background: var(--sai-violeta); color: #fff; }
 
 .mapa-leyenda {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: .5rem 1rem;
   margin: 0;
   padding: 0;
   list-style: none;

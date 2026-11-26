@@ -11,7 +11,7 @@ export function Layout() {
         {NAV.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} end className="menu-item">
             <Icon size={20} strokeWidth={2} aria-hidden="true" />
-            {label}
+            <span className="menu-texto">{label}</span>
           </NavLink>
         ))}
       </nav>
