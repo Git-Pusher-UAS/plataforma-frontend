@@ -1,36 +1,60 @@
-:root {
-  --fondo: #ffffff;
-  --texto: #111827;
-  --texto-suave: #4b5563;
-  --acento: #1f2937;
-  --borde: #d1d5db;
-  color-scheme: light dark;
+root {
+/* Color */--sai-crema:    #FBF6EF;  
+/* fondo general */--sai-lila:     #F3EEFB;  
+/* superficies */--sai-lavanda:  #CDBDF0;  
+/* marca */--sai-violeta:  #6A4BA8;  
+/* acciones y enlaces */--sai-ciruela:  #35244F;  
+/* texto y menú del panel */--sai-suave:    #5E5278;  
+/* texto secundario */--sai-rosa:     #F5BCD3;  
+/* acento */--sai-durazno:  #FAD3B0; 
+ /* aviso */--sai-menta:    #C4E8DA;  
+ /* confirmación */--sai-coral:    #F4B3A6;  
+ /* urgencia suave */--sai-ayuda:    #A63A2B;  
+ /* botón de ayuda y errores */--sai-borde:    #E2D9F0;
+/* Mapa de calor (nivel 1 a 5) */--sai-calor-1: #F3EEFB;
+--sai-calor-2: #CDBDF0;
+--sai-calor-3: #A58AD8;
+--sai-calor-4: #6A4BA8;
+--sai-calor-5: #35244F;
+/* Tipografía */--sai-serif: "Cormorant Garamond", Georgia, serif;--sai-sans:  "Nunito Sans", system-ui, sans-serif;
+/* Forma */--sai-radio-campo: 12px;--sai-radio-tarjeta: 20px;--sai-radio-boton: 999px;--sai-sombra: 0 8px 24px rgba(53,36,79,.10);
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fondo: #111827;
-    --texto: #f3f4f6;
-    --texto-suave: #9ca3af;
-    --acento: #e5e7eb;
-    --borde: #374151;
-  }
+
+body { 
+  background: var(--sai-crema); 
+  color: var(--sai-ciruela);
+  font: 17px/1.6 var(--sai-sans); }
+
+h1,h2,h3 { 
+  font-family: var(--sai-serif); 
+  font-weight: 600; 
+  line-height: 1.08; 
 }
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
-body {
-  margin: 0;
-  background: var(--fondo);
-  color: var(--texto);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+
+.boton { 
+  background: var(--sai-violeta); 
+  color: #fff; min-height: 48px;
+  padding: 0 24px; border-radius: var(--sai-radio-boton); 
+  font-weight: 700; 
 }
-.pagina { max-width: 64rem; margin: 0 auto; padding: 1rem; }
+
+.boton-ayuda { 
+  background: var(--sai-ayuda);
+  color: #fff; min-height: 84px;
+  border-radius: var(--sai-radio-boton); font-weight: 700; 
+}
+
+.pagina { 
+  max-width: 64rem; 
+  margin: 0 auto; 
+  padding: 1rem;
+}
+
 .barra {
   display: flex; justify-content: flex-end; gap: .5rem;
   padding: .5rem 1rem; border-bottom: 1px solid var(--borde);
 }
+
 button {
   font: inherit; cursor: pointer; padding: .5rem .9rem;
   border: 1px solid var(--borde); border-radius: .5rem;
