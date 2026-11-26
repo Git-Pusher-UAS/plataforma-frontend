@@ -20,7 +20,8 @@ export function TableroPage() {
   const [vista, setVista] = useState<Vista>('municipio')
   return (
     <section>
-      <h1>Tablero</h1>
+      <p className="etiqueta-peque">Administración</p>
+      <h1>Mapa de Ahome</h1>
       <article className="tarjeta tarjeta-mapa" aria-labelledby="mapa-titulo">
         <div className="mapa-titulo">
           <div>

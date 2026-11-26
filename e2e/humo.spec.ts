@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-test('la aplicación carga y muestra la salida rápida', async ({ page }) => {
+test('la aplicación carga en el acceso y muestra la salida rápida', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Panel' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Entrar' })).toBeVisible()
   await expect(page.getByRole('button', { name: /salida rápida/i })).toBeVisible()
 })
 
