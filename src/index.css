@@ -801,7 +801,16 @@ a.indicador:hover, a.mosaico-item:hover { border-color: var(--sai-violeta); }
 .evento-cuerpo h3 a { color: var(--sai-ciruela); text-decoration: none; }
 .vacante { display: grid; gap: .4rem; justify-items: start; }
 .vacante h3 { font-size: 1.35rem; }
-.vacante h3 a { color: var(--sai-ciruela); }
+.tarjeta-vacante {
+  color: inherit;
+  text-decoration: none;
+}
+.tarjeta-vacante h3 { color: var(--sai-ciruela); }
+.tarjeta-vacante:hover { border-color: var(--sai-violeta); }
+.tarjeta-vacante:focus-visible {
+  outline: 3px solid var(--sai-lavanda);
+  outline-offset: 2px;
+}
 .avance { width: 100%; height: 8px; accent-color: var(--sai-violeta); }
 .pregunta { font: 600 1.75rem/1.15 var(--sai-serif) !important; margin-bottom: 1rem !important; }
 .escala { display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem; }
