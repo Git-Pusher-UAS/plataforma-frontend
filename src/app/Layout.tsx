@@ -78,7 +78,7 @@ export function Layout() {
             onClick={() => setAbierto(false)}
           >
             <Icon size={20} strokeWidth={2} aria-hidden="true" />
-            {label}
+            <span className="menu-texto">{label}</span>
           </NavLink>
         ))}
 

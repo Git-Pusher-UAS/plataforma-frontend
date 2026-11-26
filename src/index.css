@@ -150,10 +150,11 @@ button {
 /* Página y aviso de actualización */
 
 .pagina {
-  max-width: 64rem;
+  max-width: 76rem;
   margin: 0 auto;
   padding: 1rem;
 }
+@media (min-width: 768px) { .pagina { padding: 1.5rem 2rem; } }
 
 .aviso {
   position: fixed;
@@ -191,6 +192,8 @@ button {
 .panel { --menu-ancho: 240px; font-size: 15px; min-height: 100dvh; }
 .panel.redimensionando { user-select: none; cursor: col-resize; }
 
+/* Menú: cajón en celular, barra inferior y lateral redimensionable en escritorio */
+
 .menu-lateral {
   position: relative;
   display: flex;
@@ -199,7 +202,12 @@ button {
   padding: 1.5rem 1rem;
   background: var(--sai-ciruela);
   color: var(--sai-crema);
+  /* Red de seguridad: si algo no cabe (zoom alto), se desplaza en lugar de cortarse. */
+  overflow: auto;
+  scrollbar-width: none;
 }
+.menu-lateral::-webkit-scrollbar { width: 6px; height: 0; }
+.menu-lateral::-webkit-scrollbar-thumb { background: var(--sai-lavanda); border-radius: 999px; }
 
 .menu-cabecera {
   display: flex;
@@ -225,6 +233,7 @@ button {
 }
 
 .menu-item {
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   gap: .75rem;
@@ -234,6 +243,7 @@ button {
   color: var(--sai-crema);
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 .menu-item[aria-current="page"] {
   background: var(--sai-lavanda);
@@ -262,6 +272,20 @@ button {
 
 .barra-inferior { display: none; }
 
+/* En celular las opciones largas solo muestran el ícono; el texto sigue para lectores de pantalla. */
+@media (max-width: 767px) {
+  .menu-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.panel-cuerpo { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); } /* espacio para la barra inferior */
+
 /* Escritorio */
 @media (min-width: 768px) {
   .panel { display: grid; grid-template-columns: var(--menu-ancho) 1fr; }
@@ -270,6 +294,7 @@ button {
 
   .menu-lateral { position: sticky; top: 0; height: 100dvh; overflow-y: auto; }
   .barra .btn-menu-movil { display: none; }
+  .panel-cuerpo { padding-bottom: 0; }
 }
 
 /* Celular */
@@ -428,6 +453,80 @@ button {
   background: repeating-linear-gradient(45deg, #fff, #fff 6px, var(--sai-lila) 6px, var(--sai-lila) 12px);
   color: var(--sai-suave);
 }
+
+.tarjeta-mapa { display: grid; gap: 1.25rem; grid-template-areas: "titulo" "mapa" "lateral"; }
+.mapa-titulo { grid-area: titulo; }
+.mapa-lienzo { grid-area: mapa; }
+.mapa-titulo, .mapa-lateral { display: grid; gap: 1rem; align-content: start; }
+.mapa-lateral { grid-area: lateral; }
+.mapa-titulo p, .mapa-lateral p { margin: 0; }
+
+@media (max-width: 599px) {
+  .tarjeta-mapa { padding: 1rem; }
+  .tarjeta-mapa h2 { font-size: 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+  .tarjeta-mapa {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: 1.5rem 2rem;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "mapa titulo" "mapa lateral";
+  }
+}
+
+.mapa {
+  display: block;
+  width: 100%;
+  height: min(60dvh, 520px);
+}
+@media (min-width: 1024px) { .mapa { height: min(72dvh, 680px); } }
+.mapa-municipio { fill: none; stroke: var(--sai-ciruela); stroke-width: 1.5; }
+.mapa-sector { stroke: #fff; stroke-width: .75; stroke-linejoin: round; }
+.mapa-sector.sin-datos, .mapa-sin-datos { fill: var(--sai-crema); background: var(--sai-crema); stroke: var(--sai-lavanda); }
+.mapa-sector.calor-1 { fill: var(--sai-calor-1); }
+.mapa-sector.calor-2 { fill: var(--sai-calor-2); }
+.mapa-sector.calor-3 { fill: var(--sai-calor-3); }
+.mapa-sector.calor-4 { fill: var(--sai-calor-4); }
+.mapa-sector.calor-5 { fill: var(--sai-calor-5); }
+.mapa-sector.suprimido { fill: url(#mapa-suprimido); }
+.mapa-sector:hover { stroke: var(--sai-ciruela); stroke-width: 1.5; }
+
+.mapa-vistas {
+  display: inline-flex;
+  justify-self: start;
+  padding: 4px;
+  border-radius: var(--sai-radio-boton);
+  background: var(--sai-lila);
+}
+.mapa-vistas button {
+  min-height: 40px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: var(--sai-radio-boton);
+  background: transparent;
+  color: var(--sai-suave);
+  font-weight: 700;
+}
+.mapa-vistas button[aria-pressed="true"] { background: var(--sai-violeta); color: #fff; }
+
+.mapa-leyenda {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: .5rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.mapa-leyenda li { display: flex; align-items: center; gap: .5rem; }
+.mapa-muestra {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--sai-borde);
+}
+.mapa-fuente { margin: 0; font-size: 13px; }
 
 /* Movimiento reducido */
 
