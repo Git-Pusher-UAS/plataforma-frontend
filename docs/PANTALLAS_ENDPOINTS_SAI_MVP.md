@@ -8,6 +8,8 @@ Sirve para comprobar la coherencia entre frontend y contrato: cada pantalla enum
 
 Las rutas se escriben con el prefijo común `/api/v1` omitido.
 
+Las pantallas de la **Parte B** del flujo (portal de la usuaria `U-xx` y extensiones del personal `E-xx`) no aparecen en las secciones 1 a 5 porque no tienen endpoints en el contrato del MVP A. Lo que habría que definir está en la sección 6.
+
 ---
 
 ## 1. Qué llama cada pantalla
@@ -325,3 +327,52 @@ Límites generales: cuerpo de hasta 256 KiB, sin campos desconocidos ni propieda
 | P-60 | 202 (mfa-resets) | "Restablecimiento solicitado." No afirma que terminó |
 
 Todos los demás casos siguen la tabla de estados transversales del archivo de flujo (§5).
+
+---
+
+## 6. Parte B: capacidades de API que faltan
+
+Ninguna de las siguientes operaciones existe en el contrato del MVP A, y el documento de endpoints prohíbe registrarlas en ese perfil (§11.1). Esta tabla es el **insumo para definirlas** en OpenAPI cuando se aborden: describe qué necesita cada pantalla, no propone rutas.
+
+Al definirlas, seguir la convención del contrato: recursos en inglés, plural, minúsculas y guiones, sin prefijo `/staff`, y mantener **separadas** las identidades y sesiones del personal y de la usuaria (cookie distinta; una sesión no sirve en la otra población).
+
+### Portal de la usuaria
+
+| Pantalla | Capacidad requerida | Reutiliza | Origen |
+|---|---|---|---|
+| U-01 Activación | Canjear la activación presencial de un solo uso y definir la validación de la usuaria. Sin CURP como contraseña | Ninguno | HU-11 |
+| U-02 Acceso | Iniciar y cerrar sesión de la usuaria, con bloqueo temporal por intentos fallidos | Ninguno: las rutas de `/auth` son del personal | HU-11 |
+| U-03 Inicio | Consultar el perfil propio y los avisos pendientes | Ninguno | HU-11 |
+| U-04 Perfil y preferencias | Leer datos básicos propios; leer y cambiar preferencias de notificación (silenciar, texto genérico) | Ninguno | HU-11, HU-13 |
+| U-05 Mis citas | Listar citas propias; confirmar o cancelar según estado | Ninguno | HU-11 |
+| U-06 Recursos | Consultar el directorio institucional | **API-039** | HU-22 |
+| U-07 Pedir ayuda | Registrar un aviso de ayuda con ubicación opcional y permiso previo; credencial de ayuda de alcance limitado para enviarlo sin sesión; consultar su estado | Ninguno: API-040 es del personal | HU-12 |
+| U-08 Contactos de confianza | Alta, consulta y baja de contactos con consentimiento explícito | Ninguno | HU-12 |
+| U-09 Cursos | Listar cursos publicados; inscribirse y cancelar la inscripción | Ninguno | HU-24 |
+| U-10 Empleo | Listar vacantes con filtros; postularse | Ninguno | HU-24 |
+| U-11 Encuestas | Listar encuestas asignadas; responder una vez por asignación | Ninguno | HU-23 |
+| U-12 Recuperar acceso | Ninguna para la usuaria: la recuperación la hace el personal | Operación del personal (por definir) | HU-11 |
+
+### Extensiones del personal
+
+| Pantalla | Capacidad requerida | Reutiliza | Origen |
+|---|---|---|---|
+| E-01 / E-02 Agenda | Listar, crear, modificar y cambiar de estado citas y tareas; control de versión; sin solapamientos | Ninguno | HU-17 |
+| E-03 Recordatorios | Consultar pendientes por responsable y casos sin contacto reciente; configurar plazos | Ninguno | HU-17 |
+| E-04 Órdenes de protección | Registrar, renovar y consultar órdenes con vigencia por expediente; alertas por vencimiento; marca de prioridad en la lista de expedientes | Extiende API-020 (indicador de prioridad) | HU-14 |
+| E-05 Canalización externa | Catálogo de instancias externas; verificación del consentimiento específico antes de enviar; estados enviada, recibida y atendida | Extiende API-033 y API-034 | HU-07 |
+| E-06 Reportes | Generar y descargar exportaciones agregadas con supresión de celdas pequeñas; registro de cada exportación | Parte de la lógica de API-037 | HU-20 |
+| E-07 Bandeja de avisos | Listar avisos del turno, acusar recibo, pasar a en atención y cerrar | Ninguno | HU-12 |
+| E-08 Cursos | Crear, publicar y cancelar cursos; asistencia; visitas | Ninguno | HU-24 |
+| E-09 Vacantes | Crear, publicar y cerrar vacantes; gestionar postulaciones y estados | Ninguno | HU-24 |
+| E-10 Encuestas | Crear versiones, publicar, asignar a un caso y consultar agregados | Ninguno | HU-23 |
+| E-11 Mensajes | Enviar o programar recordatorios con plantillas neutras | Ninguno | Comunicación discreta |
+
+### Transversales
+
+| Necesidad | Detalle |
+|---|---|
+| Notificaciones | Avisos con texto genérico y opción de silenciar. Límites distintos por plataforma; se confirman al implementar |
+| Roles y permisos | El SRS ya nombra Capacitación, Responsable de empleo, Responsable de encuestas y Receptor de ayuda como roles de B y C; hay que añadirlos al enum de roles |
+| Identidad separada | Cuenta, sesión y cookie propias de la usuaria; sin roles del personal |
+| Auditoría | Cada lectura sensible de la usuaria o del personal sobre estos módulos debe auditarse igual que en el MVP A |

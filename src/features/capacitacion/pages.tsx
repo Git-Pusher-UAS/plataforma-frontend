@@ -151,6 +151,9 @@ export function NuevoCursoPage() {
   )
   return (
     <section className="pila angosta">
+      <Link to="/capacitacion/cursos" className="enlace-volver">
+        ← Cursos
+      </Link>
       <Encabezado antetitulo="Capacitación" titulo="Nuevo curso" />
       <form className="tarjeta pila" onSubmit={enviar}>
         <Segmentos opciones={TIPOS_EVENTO.map((t) => ({ valor: t.valor, texto: t.texto }))} valor={f.tipo} onCambio={(tipo) => setF({ ...f, tipo })} etiqueta="Tipo de evento" />

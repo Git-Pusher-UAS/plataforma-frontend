@@ -167,6 +167,9 @@ export function CodigoPage() {
       <Link to="/u/entrar" className="enlace-discreto">
         No me llegó el código
       </Link>
+      <Link to="/u/entrar" className="enlace-discreto">
+        Volver
+      </Link>
     </form>
   )
 }
@@ -225,6 +228,9 @@ export function CrearCuentaPage() {
       </button>
       <Link to="/u/entrar" className="enlace-discreto">
         Ya tengo cuenta
+      </Link>
+      <Link to="/u" className="enlace-discreto">
+        Volver
       </Link>
     </form>
   )
