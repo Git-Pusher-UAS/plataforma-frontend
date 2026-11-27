@@ -21,6 +21,14 @@ export function useDirectorio() {
   })
 }
 
+function adaptarAlerta(raw: unknown): Alerta {
+  const r = raw as Omit<Alerta, 'estado'> & { estado: string }
+  return {
+    ...r,
+    estado: r.estado === 'activa' ? 'recibida' : (r.estado as Alerta['estado']),
+  }
+}
+
 /** POST /help-alerts — la usuaria pide ayuda; se envía su ubicación si la autorizó. */
 export function useEnviarAlerta() {
   return useMutation({
@@ -29,6 +37,7 @@ export function useEnviarAlerta() {
         metodo: 'POST',
         ruta: '/help-alerts',
         cuerpo,
+        adaptar: adaptarAlerta,
         simulado: () => ({ id: 'al-1', estado: 'recibida', ubicacionCompartida: cuerpo.lat !== undefined, contactosAvisados: false }),
       }),
   })
@@ -41,6 +50,7 @@ export function useAvisarContactos() {
       pedir<Alerta>({
         metodo: 'POST',
         ruta: `/help-alerts/${id}/trusted-contacts`,
+        adaptar: adaptarAlerta,
         simulado: () => ({ id, estado: 'recibida', ubicacionCompartida: true, contactosAvisados: true }),
       }),
   })
@@ -54,6 +64,7 @@ export function useCancelarAlerta() {
         metodo: 'POST',
         ruta: `/help-alerts/${cuerpo.id}/cancellation`,
         cuerpo: { motivo: cuerpo.motivo },
+        adaptar: adaptarAlerta,
         simulado: () => ({ id: cuerpo.id, estado: 'cancelada', ubicacionCompartida: false, contactosAvisados: false }),
       }),
   })

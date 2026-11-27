@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { useActualizarPerfil, usePerfil } from '@/features/identidad/api'
+import { useActualizarPerfil, useCerrarSesionUsuaria, usePerfil } from '@/features/identidad/api'
 import { useSesion } from '@/features/identidad/sesion'
 import { Consulta } from '@/shared/ui/Estados'
 
@@ -7,6 +7,7 @@ import { Consulta } from '@/shared/ui/Estados'
 export function PerfilPage() {
   const q = usePerfil()
   const actualizar = useActualizarPerfil()
+  const salir = useCerrarSesionUsuaria()
   const { cerrar } = useSesion()
   const navegar = useNavigate()
   return (
@@ -53,10 +54,15 @@ export function PerfilPage() {
       <button
         type="button"
         className="boton-secundario"
-        onClick={() => {
-          cerrar()
-          navegar('/u', { replace: true })
-        }}
+        disabled={salir.isPending}
+        onClick={() =>
+          salir.mutate(undefined, {
+            onSettled: () => {
+              cerrar()
+              navegar('/u', { replace: true })
+            },
+          })
+        }
       >
         Cerrar sesión
       </button>

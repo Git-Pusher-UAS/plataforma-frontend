@@ -110,7 +110,7 @@ export function ResumenPage() {
         <h2 className="subtitulo">Datos generales</h2>
         <dl className="datos">
           <dt>Edad</dt>
-          <dd>{exp.edad} años</dd>
+          <dd>{exp.edad !== null ? `${exp.edad} años` : '—'}</dd>
           <dt>Sector</dt>
           <dd>{exp.sector}</dd>
           <dt>Origen</dt>
@@ -382,7 +382,18 @@ export function ConsentimientosPage() {
                   {esTS && (
                     <td>
                       {c.revocable && c.decision === 'aceptado' && (
-                        <button type="button" className="boton-secundario boton-chico" disabled={revocar.isPending} onClick={() => revocar.mutate(c.id)}>
+                        <button
+                          type="button"
+                          className="boton-secundario boton-chico"
+                          disabled={revocar.isPending}
+                          onClick={() =>
+                            revocar.mutate(
+                              c.consentId && c.propositoId
+                                ? { consentId: c.consentId, propositoId: c.propositoId }
+                                : c.id,
+                            )
+                          }
+                        >
                           Revocar
                         </button>
                       )}

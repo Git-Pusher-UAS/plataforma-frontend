@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { consulta, pedir } from '@/shared/lib/servicio'
-import type { Rol } from '@/features/identidad/sesion'
+import { areaDeDepartamento, departamentoDeRol, mapaDepartamentos, mapaPropositos, useCatalogos } from '@/api/catalogos'
+import { ApiError } from '@/api/client'
+import { useSesion, type Rol } from '@/features/identidad/sesion'
+import { consulta, esModoSimulado, formatIfMatch, pedir } from '@/shared/lib/servicio'
 
 export type Area = 'trabajo-social' | 'psicologia' | 'juridico'
 export type EstadoExpediente = 'abierto' | 'en_seguimiento' | 'cerrado'
@@ -17,14 +19,67 @@ export type ResumenExpediente = { id: string; alias: string; estado: EstadoExped
 export type CampoOculto = 'curp' | 'domicilio' | 'telefono'
 export type Expediente = ResumenExpediente & {
   origen: string
-  edad: number
+  edad: number | null
   sector: string
   ocultos: Record<CampoOculto, string> // siempre enmascarados
   version: string
 }
 export type Evento = { id: string; fecha: string; area: Area; texto: string }
 export type Nota = { id: string; area: Area; autor: string; horaDeclarada: string; registrada: string; texto: string; corrigeA?: string }
-export type Consentimiento = { id: string; finalidad: string; decision: 'aceptado' | 'rechazado' | 'revocado'; fecha: string; version: string; revocable: boolean }
+export type Consentimiento = {
+  id: string
+  consentId?: string
+  propositoId?: string
+  finalidad: string
+  decision: 'aceptado' | 'rechazado' | 'revocado'
+  fecha: string
+  version: string
+  revocable: boolean
+}
+
+type RawSummary = {
+  id: string
+  alias: string
+  estado: EstadoExpediente
+  origenContacto: string
+  createdAt: string
+  updatedAt: string
+  versionTag: string
+  areas?: Area[]
+  edad?: number | null
+  sector?: string
+  ocultos?: Record<CampoOculto, string>
+}
+
+type RawTimelineItem = {
+  id: string
+  tipo: string
+  departamentoId?: string | null
+  actorId: string
+  resumen: string
+  ocurridoEn: string
+}
+
+type RawNoteView = {
+  id: string
+  episodioId: string
+  autorId: string
+  autor?: string
+  texto: string
+  ocurridoEn: string
+  corrigeNotaId?: string | null
+  createdAt: string
+}
+
+type RawConsentView = {
+  consentId: string
+  propositoId: string
+  decision: 'aceptado' | 'rechazado'
+  vigente: boolean
+  revocado: boolean
+  decididoEn: string
+  revocadoEn?: string | null
+}
 
 // ---------- Datos simulados (ficticios) ----------
 const hoy = '2026-11-25'
@@ -59,7 +114,7 @@ export const areaDeRol = (rol: Rol): Area | null => (rol === 'trabajo-social' ||
 // ---------- Lista y detalle ----------
 export type FiltrosExpedientes = { estado?: EstadoExpediente; desde?: string; hasta?: string }
 
-/** GET /case-files?status=&from=&to= (solo asignados al actor; sin búsqueda por nombre ni CURP). */
+/** GET /case-files?estado=&limit= (solo asignados al actor; sin búsqueda por nombre ni CURP). */
 export function useExpedientes(rol: Rol, f: FiltrosExpedientes) {
   const area = areaDeRol(rol)
   return useQuery({
@@ -67,7 +122,23 @@ export function useExpedientes(rol: Rol, f: FiltrosExpedientes) {
     queryFn: () =>
       pedir<ResumenExpediente[]>({
         metodo: 'GET',
-        ruta: `/case-files${consulta({ status: f.estado, from: f.desde, to: f.hasta, limit: 20 })}`,
+        ruta: `/case-files${consulta({ estado: f.estado, limit: 20 })}`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw)
+            ? (raw as RawSummary[])
+            : ((raw as { items?: RawSummary[] } | null)?.items ?? [])
+          const mapped: ResumenExpediente[] = items.map((s) => ({
+            id: s.id,
+            alias: s.alias,
+            estado: s.estado,
+            // TODO(backend): remove fallback once GET /case-files returns areas
+            areas: s.areas && s.areas.length > 0 ? s.areas : area ? [area] : [],
+            abierto: s.createdAt.slice(0, 10),
+            actualizado: s.updatedAt.slice(0, 10),
+          }))
+          // TODO(backend): remove client-side date filter once GET /case-files parses from/to
+          return mapped.filter((e) => (!f.desde || e.abierto >= f.desde) && (!f.hasta || e.abierto <= f.hasta))
+        },
         simulado: () =>
           expedientes
             .filter((e) => area && e.areas.includes(area))
@@ -80,9 +151,44 @@ export function useExpedientes(rol: Rol, f: FiltrosExpedientes) {
 /** GET /case-files/{recordId}. Ajeno o inexistente responden igual: null → P-90. */
 export function useExpediente(id: string, rol: Rol) {
   const area = areaDeRol(rol)
+  const catalogos = useCatalogos(Boolean(id))
   return useQuery({
     queryKey: ['expediente', id, rol],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/case-files/${id}`, simulado: () => expedientes.find((e) => e.id === id && area && e.areas.includes(area)) ?? null }),
+    queryFn: async () => {
+      try {
+        return await pedir<Expediente | null>({
+          metodo: 'GET',
+          ruta: `/case-files/${id}`,
+          adaptar: (raw) => {
+            const s = raw as RawSummary
+            const origenNombre =
+              catalogos.data?.origenesContacto.find((o) => o.codigo === s.origenContacto)?.nombre ?? s.origenContacto
+            return {
+              id: s.id,
+              alias: s.alias,
+              estado: s.estado,
+              // TODO(backend): remove fallbacks once GET /case-files/:id returns areas, sector, edad, and ocultos
+              areas: s.areas && s.areas.length > 0 ? s.areas : area ? [area] : [],
+              abierto: s.createdAt.slice(0, 10),
+              actualizado: s.updatedAt.slice(0, 10),
+              origen: origenNombre,
+              edad: s.edad ?? null,
+              sector: s.sector ?? 'Sin especificar',
+              ocultos: s.ocultos ?? {
+                curp: '•••• ••••••••• ••',
+                domicilio: '••••••••',
+                telefono: '•• •••• ••',
+              },
+              version: s.versionTag,
+            }
+          },
+          simulado: () => expedientes.find((e) => e.id === id && area && e.areas.includes(area)) ?? null,
+        })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null
+        throw err
+      }
+    },
   })
 }
 
@@ -94,7 +200,8 @@ export function useCambiarEstado(id: string) {
       pedir<void>({
         metodo: 'PATCH',
         ruta: `/case-files/${id}`,
-        cuerpo: { status: c.estado, motivo: c.motivo },
+        headers: { 'If-Match': formatIfMatch(c.version) },
+        cuerpo: { estado: c.estado, ...(c.motivo ? { motivo: c.motivo } : {}) },
         simulado: () => {
           const e = expedientes.find((x) => x.id === id)
           if (e) {
@@ -117,7 +224,7 @@ export function useRevelarDato(id: string) {
       pedir<{ valor: string }>({
         metodo: 'POST',
         ruta: `/case-files/${id}/disclosures`,
-        cuerpo: { field: c.campo, motivo: c.motivo },
+        cuerpo: { campo: c.campo, motivo: c.motivo },
         simulado: () => ({ valor: { curp: 'XEXX010101MSLXXX07', domicilio: 'Calle Ficticia 123, Los Mochis', telefono: '668 000 0081' }[c.campo] }),
       }),
   })
@@ -138,9 +245,19 @@ export function useComprobarCurp() {
   })
 }
 
-export type NuevoExpediente = { curp: string; nombre: string; edad: number; telefono: string; sector: string; origen: string; consentimiento: 'aceptado' | 'rechazado' }
+export type NuevoExpediente = {
+  alias: string
+  curp: string
+  nombre: string
+  fechaNacimiento: string
+  telefono?: string
+  sectorId: string
+  origenContacto: string
+  propositoIds: string[]
+  consentimiento: 'aceptado' | 'rechazado'
+}
 
-/** POST /case-files (alta atómica: persona, origen y consentimiento; con Idempotency-Key). */
+/** POST /case-files (alta atómica: persona, origen y consentimiento; con X-Operation-Id). */
 export function useCrearExpediente() {
   const qc = useQueryClient()
   return useMutation({
@@ -148,20 +265,38 @@ export function useCrearExpediente() {
       pedir<{ id: string }>({
         metodo: 'POST',
         ruta: '/case-files',
-        cuerpo: c,
+        headers: { 'X-Operation-Id': c.operationId },
+        cuerpo: {
+          alias: c.alias,
+          nombre: c.nombre,
+          curp: c.curp,
+          fechaNacimiento: c.fechaNacimiento,
+          ...(c.telefono ? { telefono: c.telefono } : {}),
+          sectorId: c.sectorId,
+          origenContacto: c.origenContacto,
+          consentimiento: {
+            decision: c.consentimiento,
+            modalidad: 'presencial',
+            propositoIds: c.propositoIds,
+            capturadoEn: new Date().toISOString(),
+          },
+        },
+        adaptar: (raw) => ({ id: (raw as { id: string }).id }),
         simulado: () => {
           const id = `EXP-0${430 + expedientes.length}`
+          const nacimiento = new Date(`${c.fechaNacimiento}T12:00:00`)
+          const edad = Number.isNaN(nacimiento.getTime()) ? null : Math.max(0, new Date().getFullYear() - nacimiento.getFullYear())
           expedientes.unshift({
             id,
-            alias: 'Caso nuevo',
+            alias: c.alias || 'Caso nuevo',
             estado: 'abierto',
             areas: ['trabajo-social'],
             abierto: hoy,
             actualizado: hoy,
-            origen: c.origen,
-            edad: c.edad,
-            sector: c.sector,
-            ocultos: { curp: `•••• ••••••••• ${c.curp.slice(-2)}`, domicilio: 'Col. •••••', telefono: `•• •••• ${c.telefono.slice(-2)}` },
+            origen: c.origenContacto,
+            edad,
+            sector: c.sectorId,
+            ocultos: { curp: `•••• ••••••••• ${c.curp.slice(-2)}`, domicilio: 'Col. •••••', telefono: `•• •••• ${(c.telefono ?? '').slice(-2)}` },
             version: 'v1',
           })
           return { id }
@@ -182,29 +317,96 @@ export function useSolicitarAcceso() {
 // ---------- Pestañas del expediente ----------
 /** GET /case-files/{recordId}/timeline — solo eventos de las áreas del actor. */
 export function useLineaTiempo(id: string, area: Area) {
+  const catalogos = useCatalogos(Boolean(id))
+  const deps = mapaDepartamentos(catalogos.data)
   return useQuery({
     queryKey: ['linea', id, area],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/case-files/${id}/timeline`, simulado: () => (id === 'EXP-0412' ? eventos.filter((e) => e.area === area || e.area === 'trabajo-social') : []) }),
+    queryFn: () =>
+      pedir<Evento[]>({
+        metodo: 'GET',
+        ruta: `/case-files/${id}/timeline`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw)
+            ? (raw as RawTimelineItem[])
+            : ((raw as { items?: RawTimelineItem[] } | null)?.items ?? [])
+          return items.map((it) => ({
+            id: it.id,
+            fecha: it.ocurridoEn,
+            area: (it.departamentoId ? areaDeDepartamento(deps.get(it.departamentoId)) : null) ?? area,
+            texto: it.resumen,
+          }))
+        },
+        simulado: () => (id === 'EXP-0412' ? eventos.filter((e) => e.area === area || e.area === 'trabajo-social') : []),
+      }),
   })
+}
+
+function resolverDepartamentoId(personalDeptId: string | undefined, personalRol: Rol | undefined, area: Area, catalogos: ReturnType<typeof useCatalogos>['data']): string {
+  if (personalDeptId && personalRol === area) return personalDeptId
+  return departamentoDeRol(catalogos, area)?.id ?? area
 }
 
 /** GET /case-files/{recordId}/departments/{departmentId}/notes */
 export function useNotas(id: string, area: Area) {
+  const { personal } = useSesion()
+  const catalogos = useCatalogos(Boolean(id))
+  const departmentId = resolverDepartamentoId(personal?.departmentId, personal?.rol, area, catalogos.data)
   return useQuery({
-    queryKey: ['notas', id, area],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/case-files/${id}/departments/${area}/notes`, simulado: () => notas.filter((n) => n.area === area) }),
+    queryKey: ['notas', id, area, departmentId],
+    enabled: Boolean(id) && (esModoSimulado() || Boolean(personal?.departmentId || catalogos.data)),
+    queryFn: () =>
+      pedir<Nota[]>({
+        metodo: 'GET',
+        ruta: `/case-files/${id}/departments/${departmentId}/notes`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw)
+            ? (raw as RawNoteView[])
+            : ((raw as { items?: RawNoteView[] } | null)?.items ?? [])
+          return items.map((n) => ({
+            id: n.id,
+            area,
+            // TODO(backend): remove once NoteView returns autor display name
+            autor: n.autor ?? (personal?.id && n.autorId === personal.id ? personal.nombre : 'Personal del área'),
+            horaDeclarada: n.ocurridoEn,
+            registrada: n.createdAt,
+            texto: n.texto,
+            corrigeA: n.corrigeNotaId ?? undefined,
+          }))
+        },
+        simulado: () => notas.filter((n) => n.area === area),
+      }),
   })
 }
 
-/** POST /case-files/{recordId}/departments/{departmentId}/notes (corrección = nota nueva con correctsNoteId). */
+/** POST /case-files/{recordId}/departments/{departmentId}/notes (corrección = nota nueva con corrigeNotaId). */
 export function useCrearNota(id: string, area: Area) {
   const qc = useQueryClient()
+  const { personal } = useSesion()
+  const catalogos = useCatalogos(Boolean(id))
+  const departmentId = resolverDepartamentoId(personal?.departmentId, personal?.rol, area, catalogos.data)
   return useMutation({
     mutationFn: (c: { texto: string; horaDeclarada: string; corrigeA?: string; autor: string }) =>
       pedir<Nota>({
         metodo: 'POST',
-        ruta: `/case-files/${id}/departments/${area}/notes`,
-        cuerpo: { text: c.texto, declaredAt: c.horaDeclarada, correctsNoteId: c.corrigeA, operationId: crypto.randomUUID() },
+        ruta: `/case-files/${id}/departments/${departmentId}/notes`,
+        headers: { 'X-Operation-Id': crypto.randomUUID() },
+        cuerpo: {
+          texto: c.texto,
+          ocurridoEn: new Date(c.horaDeclarada).toISOString(),
+          ...(c.corrigeA ? { corrigeNotaId: c.corrigeA } : {}),
+        },
+        adaptar: (raw) => {
+          const n = raw as RawNoteView
+          return {
+            id: n.id,
+            area,
+            autor: n.autor ?? c.autor,
+            horaDeclarada: n.ocurridoEn,
+            registrada: n.createdAt,
+            texto: n.texto,
+            corrigeA: n.corrigeNotaId ?? undefined,
+          }
+        },
         simulado: () => {
           const n: Nota = { id: `n${notas.length + 1}`, area, autor: c.autor, horaDeclarada: c.horaDeclarada, registrada: new Date().toISOString().slice(0, 16), texto: c.texto, corrigeA: c.corrigeA }
           notas.push(n)
@@ -217,23 +419,56 @@ export function useCrearNota(id: string, area: Area) {
 
 /** GET /case-files/{recordId}/consents */
 export function useConsentimientos(id: string) {
-  return useQuery({ queryKey: ['consentimientos', id], queryFn: () => pedir({ metodo: 'GET', ruta: `/case-files/${id}/consents`, simulado: () => consentimientos }) })
+  const catalogos = useCatalogos(Boolean(id))
+  const propositos = mapaPropositos(catalogos.data)
+  return useQuery({
+    queryKey: ['consentimientos', id],
+    queryFn: () =>
+      pedir<Consentimiento[]>({
+        metodo: 'GET',
+        ruta: `/case-files/${id}/consents`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw)
+            ? (raw as RawConsentView[])
+            : ((raw as { items?: RawConsentView[] } | null)?.items ?? [])
+          return items.map((c) => {
+            const prop = propositos.get(c.propositoId)
+            return {
+              id: `${c.consentId}:${c.propositoId}`,
+              consentId: c.consentId,
+              propositoId: c.propositoId,
+              finalidad: prop?.descripcion ?? c.propositoId,
+              decision: c.revocado ? 'revocado' : c.decision,
+              fecha: c.decididoEn.slice(0, 10),
+              // TODO(backend): remove once ConsentView returns aviso version
+              version: 'Aviso vigente',
+              revocable: Boolean(c.vigente && !c.revocado && (prop ? prop.opcional : true)),
+            }
+          })
+        },
+        simulado: () => consentimientos,
+      }),
+  })
 }
 
 /** POST /case-files/{recordId}/consents/{consentId}/revocations */
 export function useRevocarConsentimiento(id: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (consentId: string) =>
-      pedir<void>({
+    mutationFn: (target: string | { consentId: string; propositoId: string }) => {
+      const consentId = typeof target === 'string' ? target : target.consentId
+      const propositoId = typeof target === 'string' ? target : target.propositoId
+      return pedir<void>({
         metodo: 'POST',
         ruta: `/case-files/${id}/consents/${consentId}/revocations`,
+        cuerpo: { propositoIds: [propositoId] },
         simulado: () => {
           const c = consentimientos.find((x) => x.id === consentId)
           if (c) consentimientos.push({ ...c, id: `cs${consentimientos.length + 1}`, decision: 'revocado', fecha: hoy, revocable: false })
           if (c) c.revocable = false
         },
-      }),
+      })
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['consentimientos', id] }),
   })
 }

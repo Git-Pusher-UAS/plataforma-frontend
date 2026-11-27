@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate, Outlet, useNavigate, useOutletContext } from 'react-router'
-import { ORIGENES, useComprobarCurp, useCrearExpediente, useSolicitarAcceso } from '@/features/expedientes/api'
+import { useCatalogos } from '@/api/catalogos'
+import { useComprobarCurp, useCrearExpediente, useSolicitarAcceso } from '@/features/expedientes/api'
 import { ApiError } from '@/api/client'
 import { Encabezado } from '@/shared/ui/Encabezado'
 
@@ -93,23 +94,56 @@ export function ComprobarCurpPage() {
 /** P-12 · Nuevo expediente: datos, origen y consentimiento en un solo envío. */
 export function DatosExpedientePage() {
   const t = useTramite()
+  const catalogos = useCatalogos()
   const crear = useCrearExpediente()
   const navegar = useNavigate()
   // La clave de idempotencia se crea al abrir el formulario y se conserva en reintentos.
   const [operationId] = useState(() => crypto.randomUUID())
-  const [f, setF] = useState({ nombre: '', edad: '', telefono: '', sector: '', origen: ORIGENES[0]!, consentimiento: '' as '' | 'aceptado' | 'rechazado' })
+  const [f, setF] = useState({
+    alias: '',
+    nombre: '',
+    fechaNacimiento: '',
+    telefono: '',
+    sectorId: '',
+    origenContacto: '',
+    consentimiento: '' as '' | 'aceptado' | 'rechazado',
+  })
   if (!t.curp) return <Navigate to="/expedientes/nuevo" replace />
+
+  const sectores = catalogos.data?.sectores ?? []
+  const origenes = catalogos.data?.origenesContacto ?? []
+  const sectorId = f.sectorId || sectores[0]?.id || ''
+  const origenContacto = f.origenContacto || origenes[0]?.codigo || 'presencial'
+  const propositoIds = (catalogos.data?.propositosConsentimiento ?? []).filter((p) => !p.opcional).map((p) => p.id)
+  const hoyIso = new Date().toLocaleDateString('en-CA')
 
   const enviar = (e: FormEvent) => {
     e.preventDefault()
-    if (!f.consentimiento) return
+    if (!f.consentimiento || !sectorId) return
     crear.mutate(
-      { curp: t.curp, nombre: f.nombre, edad: Number(f.edad), telefono: f.telefono, sector: f.sector, origen: f.origen, consentimiento: f.consentimiento, operationId },
+      {
+        alias: f.alias.trim(),
+        curp: t.curp,
+        nombre: f.nombre.trim(),
+        fechaNacimiento: f.fechaNacimiento,
+        telefono: f.telefono || undefined,
+        sectorId,
+        origenContacto,
+        propositoIds,
+        consentimiento: f.consentimiento,
+        operationId,
+      },
       {
         onSuccess: ({ id }) => navegar(`/expedientes/${id}`, { replace: true }),
         onError: (err) => {
           // 409: alguien registró a la misma persona; se pasa a P-13 sin pedir la CURP otra vez.
-          if (err instanceof ApiError && err.status === 409) navegar('/expedientes/nuevo/existente', { replace: true })
+          if (err instanceof ApiError && err.status === 409) {
+            t.setExistente({
+              linkToken: typeof err.extra?.linkToken === 'string' ? err.extra.linkToken : undefined,
+              department: typeof err.extra?.department === 'string' ? err.extra.department : undefined,
+            })
+            navegar('/expedientes/nuevo/existente', { replace: true })
+          }
         },
       },
     )
@@ -125,13 +159,18 @@ export function DatosExpedientePage() {
         <fieldset className="grupo">
           <legend className="subtitulo">Persona</legend>
           <div className="campo">
+            <label htmlFor="alias">Alias del expediente</label>
+            <input id="alias" autoComplete="off" maxLength={100} value={f.alias} onChange={(e) => setF({ ...f, alias: e.target.value })} placeholder="Por ejemplo: Caso Jacaranda" required />
+            <span className="campo-ayuda">Nombre clave neutro para listas y canalizaciones.</span>
+          </div>
+          <div className="campo">
             <label htmlFor="nombre">Nombre completo</label>
             <input id="nombre" autoComplete="off" value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} required />
           </div>
           <div className="rejilla-2">
             <div className="campo">
-              <label htmlFor="edad">Edad</label>
-              <input id="edad" type="number" min={0} max={120} value={f.edad} onChange={(e) => setF({ ...f, edad: e.target.value })} required />
+              <label htmlFor="fecha-nac">Fecha de nacimiento</label>
+              <input id="fecha-nac" type="date" max={hoyIso} value={f.fechaNacimiento} onChange={(e) => setF({ ...f, fechaNacimiento: e.target.value })} required />
             </div>
             <div className="campo">
               <label htmlFor="tel">Teléfono</label>
@@ -140,15 +179,22 @@ export function DatosExpedientePage() {
           </div>
           <div className="campo">
             <label htmlFor="sector">Sector de residencia</label>
-            <input id="sector" value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })} placeholder="Por ejemplo: Sector 12" required />
+            <select id="sector" value={sectorId} onChange={(e) => setF({ ...f, sectorId: e.target.value })} required>
+              {sectores.length === 0 && <option value="">Cargando sectores…</option>}
+              {sectores.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre}
+                </option>
+              ))}
+            </select>
             <span className="campo-ayuda">Solo el sector, para estadística. El domicilio se captura después, como dato oculto.</span>
           </div>
         </fieldset>
         <fieldset className="grupo">
           <legend className="subtitulo">Origen del primer contacto</legend>
-          {ORIGENES.map((o) => (
-            <label key={o} className="opcion">
-              <input type="radio" name="origen" checked={f.origen === o} onChange={() => setF({ ...f, origen: o })} /> {o}
+          {origenes.map((o) => (
+            <label key={o.codigo} className="opcion">
+              <input type="radio" name="origen" checked={origenContacto === o.codigo} onChange={() => setF({ ...f, origenContacto: o.codigo })} /> {o.nombre}
             </label>
           ))}
         </fieldset>
@@ -164,14 +210,16 @@ export function DatosExpedientePage() {
         </fieldset>
         {crear.isError && !(crear.error instanceof ApiError && crear.error.status === 409) && (
           <p className="texto-error" role="alert">
-            No se pudo guardar. Intenta de nuevo; no se duplicará.
+            {f.consentimiento === 'rechazado' && crear.error instanceof ApiError && crear.error.status === 422
+              ? 'El consentimiento inicial debe ser aceptado para registrar el expediente.'
+              : 'No se pudo guardar. Intenta de nuevo; no se duplicará.'}
           </p>
         )}
         <div className="fila-botones">
           <Link to="/expedientes/nuevo" className="boton-secundario">
             Atrás
           </Link>
-          <button className="boton" disabled={crear.isPending}>
+          <button className="boton" disabled={crear.isPending || !sectorId}>
             Guardar expediente
           </button>
         </div>

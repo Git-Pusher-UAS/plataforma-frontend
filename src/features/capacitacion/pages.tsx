@@ -17,6 +17,7 @@ import {
 import { useVacantesAdmin } from '@/features/bolsa/api'
 import { EtiquetaEvento, TarjetaEvento } from '@/features/portal/ForoEmpleo'
 import { useSesion } from '@/features/identidad/sesion'
+import { useMapaCalor } from '@/features/tablero/api'
 import { Cargando, Consulta } from '@/shared/ui/Estados'
 import { Encabezado } from '@/shared/ui/Encabezado'
 import { Segmentos } from '@/shared/ui/Pestanas'
@@ -307,6 +308,9 @@ export function PasarListaPage() {
 export function VisitasPage() {
   const q = useVisitas()
   const crear = useCrearVisita()
+  const mapa = useMapaCalor()
+  const niveles = mapa.data ?? {}
+  const hayDatos = Object.keys(niveles).length > 0
   const [f, setF] = useState({ sector: '', fecha: '', tema: '' })
   return (
     <section className="pila">
@@ -317,10 +321,9 @@ export function VisitasPage() {
         <div className="tarjeta pila-corta">
           <h2 className="subtitulo">Mapa de Ahome</h2>
           <Suspense fallback={<Cargando texto="Cargando mapa…" />}>
-            {/* Solo el espacio del mapa: los niveles llegarán de GET /analytics/heatmap. */}
-            <MapaCalorAhome vista="municipio" />
+            <MapaCalorAhome vista="municipio" niveles={niveles} />
           </Suspense>
-          <p className="estado estado-aviso texto-chico">Todavía no hay datos para colorear el mapa.</p>
+          {!hayDatos && <p className="estado estado-aviso texto-chico">Todavía no hay datos para colorear el mapa.</p>}
         </div>
         <div className="pila">
           <form

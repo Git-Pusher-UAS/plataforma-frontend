@@ -1,5 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { consulta, pedir } from '@/shared/lib/servicio'
+import { apiFetch, ApiError } from '@/api/client'
+import {
+  adaptarContratacion,
+  adaptarCvDesdeBackend,
+  adaptarEmpresa,
+  adaptarPostulacionUsuaria,
+  adaptarPostulanteEmpresa,
+  adaptarVacante,
+  adaptarVacanteAdminDetalle,
+  packDescripcionEmpresa,
+  serializarCvParaBackend,
+} from '@/features/bolsa/adapters'
+import { mapEstadoEmpresaBackend, useSesion } from '@/features/identidad/sesion'
+import { consulta, esModoSimulado, pedir, prefijoApi } from '@/shared/lib/servicio'
 
 /*
  * Bolsa de trabajo. Tres actores:
@@ -216,9 +229,10 @@ export function useVacantes(f: FiltrosVacantes = {}) {
   return useQuery({
     queryKey: ['vacantes', f],
     queryFn: () =>
-      pedir({
+      pedir<Vacante[]>({
         metodo: 'GET',
         ruta: `/jobs${consulta({ sector: f.sector, schedule: f.horario, type: f.tipoEmpleo, location: f.ubicacion })}`,
+        adaptar: (raw) => (Array.isArray(raw) ? raw.map(adaptarVacante) : []),
         simulado: () =>
           vacantes.filter(
             (v) =>
@@ -236,54 +250,111 @@ export function useVacantes(f: FiltrosVacantes = {}) {
 export function useVacante(id: string) {
   return useQuery({
     queryKey: ['vacante', id],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/jobs/${id}`, simulado: () => vacantes.find((v) => v.id === id && v.estado === 'publicada') ?? null }),
+    queryFn: async () => {
+      try {
+        return await pedir<Vacante | null>({
+          metodo: 'GET',
+          ruta: `/jobs/${id}`,
+          adaptar: adaptarVacante,
+          simulado: () => vacantes.find((v) => v.id === id && v.estado === 'publicada') ?? null,
+        })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null
+        throw err
+      }
+    },
   })
 }
 
-/** GET /portal/me/cv — 200 con el CV o null si aún no existe. */
+/** GET /portal/me/cv — 200 con el CV o null si aún no existe (404 en backend). */
 export function useMiCv() {
-  return useQuery({ queryKey: ['mi-cv'], queryFn: () => pedir({ metodo: 'GET', ruta: '/portal/me/cv', simulado: () => miCv }) })
+  return useQuery({
+    queryKey: ['mi-cv'],
+    queryFn: async () => {
+      try {
+        return await pedir<Cv | null>({
+          metodo: 'GET',
+          ruta: '/portal/me/cv',
+          adaptar: adaptarCvDesdeBackend,
+          simulado: () => miCv,
+        })
+      } catch (err) {
+        // TODO(backend): backend returns 404 when CV does not exist yet
+        if (err instanceof ApiError && err.status === 404) return null
+        throw err
+      }
+    },
+  })
 }
 
 /** PUT /portal/me/cv */
 export function useGuardarCv() {
   const qc = useQueryClient()
+  const { usuaria } = useSesion()
   return useMutation({
     mutationFn: (cv: Omit<Cv, 'actualizado'>) =>
-      pedir<Cv>({ metodo: 'PUT', ruta: '/portal/me/cv', cuerpo: cv, simulado: () => (miCv = { ...cv, actualizado: hoy() }) }),
+      pedir<Cv>({
+        metodo: 'PUT',
+        ruta: '/portal/me/cv',
+        cuerpo: serializarCvParaBackend(cv, usuaria?.alias ?? 'Usuaria'),
+        adaptar: adaptarCvDesdeBackend,
+        simulado: () => (miCv = { ...cv, actualizado: hoy() }),
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['mi-cv'] }),
   })
 }
 
-/** POST /jobs/{id}/applications — envía el CV actual (copia congelada). 409 si ya se postuló, 422 si no tiene CV. */
+/** POST /jobs/{id}/applications — envía el CV actual (copia congelada). Backend responde 204. */
 export function usePostularme() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) =>
-      pedir<Postulacion>({
+    mutationFn: async (id: string): Promise<Postulacion> => {
+      if (esModoSimulado()) {
+        return pedir<Postulacion>({
+          metodo: 'POST',
+          ruta: `/jobs/${id}/applications`,
+          simulado: () => {
+            const v = vacantes.find((x) => x.id === id)!
+            v.postulada = true
+            const p: PostulacionInterna = {
+              id: `po${postulaciones.length + 1}`,
+              folio: `BT-01${String(postulaciones.length + 1).padStart(2, '0')}`,
+              vacanteId: id,
+              puesto: v.puesto,
+              empresa: v.empresa,
+              estado: 'enviada',
+              enviada: hoy(),
+              historial: [{ estado: 'enviada', fecha: hoy() }],
+              cv: { ...(miCv ?? cvEjemplo('María')), nombre: 'María' },
+              vista: false,
+              telefono: '6680000042',
+              esMia: true,
+            }
+            postulaciones.unshift(p)
+            return paraUsuaria(p)
+          },
+        })
+      }
+      await pedir<void>({
         metodo: 'POST',
         ruta: `/jobs/${id}/applications`,
-        simulado: () => {
-          const v = vacantes.find((x) => x.id === id)!
-          v.postulada = true
-          const p: PostulacionInterna = {
-            id: `po${postulaciones.length + 1}`,
-            folio: `BT-01${String(postulaciones.length + 1).padStart(2, '0')}`,
-            vacanteId: id,
-            puesto: v.puesto,
-            empresa: v.empresa,
-            estado: 'enviada',
-            enviada: hoy(),
-            historial: [{ estado: 'enviada', fecha: hoy() }],
-            cv: { ...(miCv ?? cvEjemplo('María')), nombre: 'María' },
-            vista: false,
-            telefono: '6680000042',
-            esMia: true,
-          }
-          postulaciones.unshift(p)
-          return paraUsuaria(p)
-        },
-      }),
+        simulado: () => undefined,
+      })
+      const lista = await apiFetch<unknown>(`${prefijoApi()}/portal/me/applications`).catch(() => [])
+      const encontradas = Array.isArray(lista) ? lista.map(adaptarPostulacionUsuaria) : []
+      return (
+        encontradas.find((p) => p.vacanteId === id) ?? {
+          id: '',
+          folio: '',
+          vacanteId: id,
+          puesto: '',
+          empresa: '',
+          estado: 'enviada',
+          enviada: hoy(),
+          historial: [{ estado: 'enviada', fecha: hoy() }],
+        }
+      )
+    },
     onSuccess: () => qc.invalidateQueries(),
   })
 }
@@ -292,7 +363,13 @@ export function usePostularme() {
 export function useMisPostulaciones() {
   return useQuery({
     queryKey: ['mis-postulaciones'],
-    queryFn: () => pedir({ metodo: 'GET', ruta: '/portal/me/applications', simulado: () => postulaciones.filter((p) => p.esMia).map(paraUsuaria) }),
+    queryFn: () =>
+      pedir<Postulacion[]>({
+        metodo: 'GET',
+        ruta: '/portal/me/applications',
+        adaptar: (raw) => (Array.isArray(raw) ? raw.map(adaptarPostulacionUsuaria) : []),
+        simulado: () => postulaciones.filter((p) => p.esMia).map(paraUsuaria),
+      }),
   })
 }
 
@@ -300,7 +377,19 @@ export function useMisPostulaciones() {
 export function useMiPostulacion(id: string) {
   return useQuery({
     queryKey: ['mi-postulacion', id],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/portal/me/applications/${id}`, simulado: () => postulaciones.filter((p) => p.esMia).map(paraUsuaria).find((p) => p.id === id) ?? null }),
+    queryFn: async () => {
+      try {
+        return await pedir<Postulacion | null>({
+          metodo: 'GET',
+          ruta: `/portal/me/applications/${id}`,
+          adaptar: adaptarPostulacionUsuaria,
+          simulado: () => postulaciones.filter((p) => p.esMia).map(paraUsuaria).find((p) => p.id === id) ?? null,
+        })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null
+        throw err
+      }
+    },
   })
 }
 
@@ -312,7 +401,7 @@ export function useResponderEntrevista(id: string) {
       pedir<void>({
         metodo: 'POST',
         ruta: `/portal/me/applications/${id}/interview-response`,
-        cuerpo: { respuesta },
+        cuerpo: { respuesta: respuesta === 'confirmada' ? 'accept' : 'decline' },
         simulado: () => {
           const p = postulaciones.find((x) => x.id === id)
           if (p?.entrevista) p.entrevista.respuesta = respuesta
@@ -354,7 +443,18 @@ export function useRegistrarEmpresa() {
       pedir<{ id: string; estado: EstadoEmpresa }>({
         metodo: 'POST',
         ruta: '/employers/registrations',
-        cuerpo: { nombre, rfc, sector, contacto, correo, telefono, aceptaAviso: true },
+        // TODO(backend): send rfc, sector, contacto, aceptaAviso directly once RegistrationRequest accepts them
+        cuerpo: {
+          nombre,
+          correo,
+          telefono,
+          descripcion: packDescripcionEmpresa({ rfc, sector, contacto }),
+        },
+        skipUnauthorizedHandler: true,
+        adaptar: (raw) => {
+          const r = raw as { id: string; estado: string }
+          return { id: r.id, estado: mapEstadoEmpresaBackend(r.estado) }
+        },
         simulado: () => {
           const e: Empresa = { nombre, rfc, sector, contacto, correo, telefono, id: `em${empresas.length + 1}`, estado: 'en_revision', solicitada: hoy() }
           empresas.push(e)
@@ -364,7 +464,7 @@ export function useRegistrarEmpresa() {
   })
 }
 
-/** POST /employers/auth/login {correo} → código de 6 dígitos al correo. */
+/** POST /employers/auth/login {correo} → código de 6 dígitos al correo/teléfono. */
 export function useEntrarEmpresa() {
   return useMutation({
     mutationFn: (correo: string) =>
@@ -372,6 +472,14 @@ export function useEntrarEmpresa() {
         metodo: 'POST',
         ruta: '/employers/auth/login',
         cuerpo: { correo },
+        skipUnauthorizedHandler: true,
+        adaptar: (raw) => {
+          const r = raw as { challengeId: string; telefonoMascara?: string; correoMascara?: string }
+          return {
+            challengeId: r.challengeId,
+            correoMascara: r.correoMascara ?? r.telefonoMascara ?? correo,
+          }
+        },
         simulado: () => {
           correoPendiente = correo.trim().toLowerCase()
           return { challengeId: 'ech-1', correoMascara: correo.replace(/^(.).*(@.*)$/, '$1•••$2') }
@@ -386,17 +494,36 @@ export function useEntrarEmpresa() {
  */
 export function useVerificarEmpresa() {
   return useMutation({
-    mutationFn: (c: { challengeId: string; codigo: string }) =>
-      pedir<{ id: string; nombre: string; estado: EstadoEmpresa }>({
+    mutationFn: async (c: { challengeId: string; codigo: string }): Promise<{ id: string; nombre: string; estado: EstadoEmpresa }> => {
+      if (esModoSimulado()) {
+        return pedir<{ id: string; nombre: string; estado: EstadoEmpresa }>({
+          metodo: 'POST',
+          ruta: '/employers/auth/verify',
+          cuerpo: { challengeId: c.challengeId, code: c.codigo },
+          simulado: () => {
+            const e = empresas.find((x) => x.correo === correoPendiente) ?? empresas.find((x) => x.id === 'em1')!
+            EMPRESA_DEMO = e.id
+            return { id: e.id, nombre: e.nombre, estado: e.estado }
+          },
+        })
+      }
+      const res = await pedir<{ employerId?: string; id?: string }>({
         metodo: 'POST',
         ruta: '/employers/auth/verify',
         cuerpo: { challengeId: c.challengeId, code: c.codigo },
-        simulado: () => {
-          const e = empresas.find((x) => x.correo === correoPendiente) ?? empresas.find((x) => x.id === 'em1')!
-          EMPRESA_DEMO = e.id
-          return { id: e.id, nombre: e.nombre, estado: e.estado }
-        },
-      }),
+        skipUnauthorizedHandler: true,
+        simulado: () => ({ id: 'em1' }),
+      })
+      const me = await apiFetch<unknown>(`${prefijoApi()}/employers/me/registration`, {
+        skipUnauthorizedHandler: true,
+      })
+      const emp = adaptarEmpresa(me)
+      return {
+        id: emp.id || res.employerId || res.id || '',
+        nombre: emp.nombre,
+        estado: emp.estado,
+      }
+    },
   })
 }
 
@@ -404,7 +531,13 @@ export function useVerificarEmpresa() {
 export function useMiSolicitud() {
   return useQuery({
     queryKey: ['mi-solicitud'],
-    queryFn: () => pedir({ metodo: 'GET', ruta: '/employers/me/registration', simulado: () => empresas.find((x) => x.id === EMPRESA_DEMO)! }),
+    queryFn: () =>
+      pedir<Empresa>({
+        metodo: 'GET',
+        ruta: '/employers/me/registration',
+        adaptar: adaptarEmpresa,
+        simulado: () => empresas.find((x) => x.id === EMPRESA_DEMO)!,
+      }),
   })
 }
 
@@ -416,7 +549,13 @@ export function useCorregirSolicitud() {
       pedir<{ estado: EstadoEmpresa }>({
         metodo: 'PUT',
         ruta: '/employers/me/registration',
-        cuerpo: { nombre, rfc, sector, contacto, telefono },
+        // TODO(backend): send rfc, sector, contacto directly once UpdateRegistrationRequest accepts them
+        cuerpo: {
+          nombre,
+          telefono,
+          descripcion: packDescripcionEmpresa({ rfc, sector, contacto }),
+        },
+        adaptar: (raw) => ({ estado: mapEstadoEmpresaBackend((raw as { estado: string }).estado) }),
         simulado: () => {
           const e = empresas.find((x) => x.id === EMPRESA_DEMO)!
           Object.assign(e, { nombre, rfc, sector, contacto, telefono, estado: 'en_revision', motivo: undefined, solicitada: hoy() })
@@ -431,7 +570,13 @@ export function useCorregirSolicitud() {
 export function useVacantesEmpresa() {
   return useQuery({
     queryKey: ['empresa-vacantes'],
-    queryFn: () => pedir({ metodo: 'GET', ruta: '/employer/jobs', simulado: () => vacantes.filter((v) => v.empresaId === EMPRESA_DEMO).map(conteos) }),
+    queryFn: () =>
+      pedir<Vacante[]>({
+        metodo: 'GET',
+        ruta: '/employer/jobs',
+        adaptar: (raw) => (Array.isArray(raw) ? raw.map(adaptarVacante) : []),
+        simulado: () => vacantes.filter((v) => v.empresaId === EMPRESA_DEMO).map(conteos),
+      }),
   })
 }
 
@@ -439,7 +584,22 @@ export function useVacantesEmpresa() {
 export function useVacanteEmpresa(id: string) {
   return useQuery({
     queryKey: ['empresa-vacante', id],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/employer/jobs/${id}`, simulado: () => { const v = vacantes.find((x) => x.id === id && x.empresaId === EMPRESA_DEMO); return v ? conteos(v) : null } }),
+    queryFn: async () => {
+      try {
+        return await pedir<Vacante | null>({
+          metodo: 'GET',
+          ruta: `/employer/jobs/${id}`,
+          adaptar: adaptarVacante,
+          simulado: () => {
+            const v = vacantes.find((x) => x.id === id && x.empresaId === EMPRESA_DEMO)
+            return v ? conteos(v) : null
+          },
+        })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null
+        throw err
+      }
+    },
   })
 }
 
@@ -453,7 +613,17 @@ export function useCrearVacanteEmpresa() {
       pedir<Vacante>({
         metodo: 'POST',
         ruta: '/employer/jobs',
-        cuerpo: d,
+        // TODO(backend): include sueldo once employer JobRequest supports it
+        cuerpo: {
+          puesto: d.puesto,
+          sector: d.sector,
+          horario: d.horario,
+          tipoEmpleo: d.tipoEmpleo,
+          ubicacion: d.ubicacion,
+          descripcion: d.descripcion,
+          requisitos: d.requisitos.join('\n'),
+        },
+        adaptar: adaptarVacante,
         simulado: () => {
           const e = empresas.find((x) => x.id === EMPRESA_DEMO)!
           const v: Vacante = { ...d, id: `va${vacantes.length + 1}`, empresaId: e.id, empresa: e.nombre, estado: 'en_revision', actualizada: hoy() }
@@ -473,7 +643,16 @@ export function useActualizarVacanteEmpresa(id: string) {
       pedir<void>({
         metodo: 'PATCH',
         ruta: `/employer/jobs/${id}`,
-        cuerpo: cambio,
+        // TODO(backend): send estado and sueldo once PATCH /employer/jobs/:id JobRequest supports them
+        cuerpo: {
+          ...(cambio.puesto !== undefined ? { puesto: cambio.puesto } : {}),
+          ...(cambio.sector !== undefined ? { sector: cambio.sector } : {}),
+          ...(cambio.horario !== undefined ? { horario: cambio.horario } : {}),
+          ...(cambio.tipoEmpleo !== undefined ? { tipoEmpleo: cambio.tipoEmpleo } : {}),
+          ...(cambio.ubicacion !== undefined ? { ubicacion: cambio.ubicacion } : {}),
+          ...(cambio.descripcion !== undefined ? { descripcion: cambio.descripcion } : {}),
+          ...(cambio.requisitos !== undefined ? { requisitos: cambio.requisitos.join('\n') } : {}),
+        },
         simulado: () => {
           const v = vacantes.find((x) => x.id === id)
           if (!v) return
@@ -493,9 +672,10 @@ export function usePostulantes(vacanteId: string) {
   return useQuery({
     queryKey: ['postulantes', vacanteId],
     queryFn: () =>
-      pedir({
+      pedir<Postulante[]>({
         metodo: 'GET',
         ruta: `/employer/jobs/${vacanteId}/applications`,
+        adaptar: (raw) => (Array.isArray(raw) ? raw.map(adaptarPostulanteEmpresa) : []),
         simulado: () => postulaciones.filter((p) => p.vacanteId === vacanteId && p.estado !== 'retirada').map(paraEmpresa),
       }),
   })
@@ -506,22 +686,29 @@ export function usePostulante(id: string) {
   const qc = useQueryClient()
   return useQuery({
     queryKey: ['postulante', id],
-    queryFn: () =>
-      pedir({
-        metodo: 'GET',
-        ruta: `/employer/applications/${id}`,
-        simulado: () => {
-          const p = postulaciones.find((x) => x.id === id)
-          if (!p || p.estado === 'retirada') return null
-          if (!p.vista) {
-            p.vista = true
-            if (p.estado === 'enviada') avanzar(p, 'en_revision')
-            void qc.invalidateQueries({ queryKey: ['postulantes'] })
-            void qc.invalidateQueries({ queryKey: ['empresa-vacantes'] })
-          }
-          return paraEmpresa(p)
-        },
-      }),
+    queryFn: async () => {
+      try {
+        return await pedir<Postulante | null>({
+          metodo: 'GET',
+          ruta: `/employer/applications/${id}`,
+          adaptar: adaptarPostulanteEmpresa,
+          simulado: () => {
+            const p = postulaciones.find((x) => x.id === id)
+            if (!p || p.estado === 'retirada') return null
+            if (!p.vista) {
+              p.vista = true
+              if (p.estado === 'enviada') avanzar(p, 'en_revision')
+              void qc.invalidateQueries({ queryKey: ['postulantes'] })
+              void qc.invalidateQueries({ queryKey: ['empresa-vacantes'] })
+            }
+            return paraEmpresa(p)
+          },
+        })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null
+        throw err
+      }
+    },
   })
 }
 
@@ -533,7 +720,11 @@ export function useProponerEntrevista(id: string) {
       pedir<void>({
         metodo: 'POST',
         ruta: `/employer/applications/${id}/interview`,
-        cuerpo: e,
+        cuerpo: {
+          fecha: new Date(`${e.fecha}T${e.hora}:00`).toISOString(),
+          lugar: e.lugar,
+          notas: e.modalidad,
+        },
         simulado: () => {
           const p = postulaciones.find((x) => x.id === id)
           if (!p) return
@@ -553,7 +744,10 @@ export function useDecidir(id: string) {
       pedir<void>({
         metodo: 'POST',
         ruta: `/employer/applications/${id}/decision`,
-        cuerpo: d,
+        cuerpo: {
+          decision: d.decision === 'aceptada' ? 'hire' : 'reject',
+          motivo: d.motivo ?? '',
+        },
         simulado: () => {
           const p = postulaciones.find((x) => x.id === id)
           if (p) avanzar(p, d.decision)
@@ -566,11 +760,21 @@ export function useDecidir(id: string) {
 // ====================================================================
 // Capacitación
 // ====================================================================
-/** GET /admin/jobs?status= — todas las vacantes, de cualquier estado. */
+/** GET /admin/jobs — todas las vacantes, con filtro de estado en cliente. */
 export function useVacantesAdmin(estado?: EstadoVacante) {
   return useQuery({
     queryKey: ['admin-vacantes', estado ?? 'todas'],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/admin/jobs${consulta({ status: estado })}`, simulado: () => vacantes.filter((v) => !estado || v.estado === estado).map(conteos) }),
+    queryFn: () =>
+      pedir<Vacante[]>({
+        metodo: 'GET',
+        ruta: `/admin/jobs${consulta({ status: estado })}`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw) ? raw.map(adaptarVacante) : []
+          // TODO(backend): remove client-side status filter once GET /admin/jobs honors ?status=
+          return estado ? items.filter((v) => v.estado === estado) : items
+        },
+        simulado: () => vacantes.filter((v) => !estado || v.estado === estado).map(conteos),
+      }),
   })
 }
 
@@ -578,23 +782,30 @@ export function useVacantesAdmin(estado?: EstadoVacante) {
 export function useVacanteAdmin(id: string) {
   return useQuery({
     queryKey: ['admin-vacante', id],
-    queryFn: () =>
-      pedir({
-        metodo: 'GET',
-        ruta: `/admin/jobs/${id}`,
-        simulado: () => {
-          const v = vacantes.find((x) => x.id === id)
-          if (!v) return null
-          const porEstado = Object.fromEntries(
-            (Object.keys(TEXTO_POSTULACION) as EstadoPostulacion[]).map((e) => [e, postulaciones.filter((p) => p.vacanteId === id && p.estado === e).length]),
-          ) as Record<EstadoPostulacion, number>
-          return { ...conteos(v), porEstado }
-        },
-      }),
+    queryFn: async () => {
+      try {
+        return await pedir<(Vacante & { porEstado: Record<EstadoPostulacion, number> }) | null>({
+          metodo: 'GET',
+          ruta: `/admin/jobs/${id}`,
+          adaptar: adaptarVacanteAdminDetalle,
+          simulado: () => {
+            const v = vacantes.find((x) => x.id === id)
+            if (!v) return null
+            const porEstado = Object.fromEntries(
+              (Object.keys(TEXTO_POSTULACION) as EstadoPostulacion[]).map((e) => [e, postulaciones.filter((p) => p.vacanteId === id && p.estado === e).length]),
+            ) as Record<EstadoPostulacion, number>
+            return { ...conteos(v), porEstado }
+          },
+        })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null
+        throw err
+      }
+    },
   })
 }
 
-/** POST /admin/jobs/{id}/review {aprobar, motivo?} — aprobar publica; si no, «cambios» con el motivo. */
+/** POST /admin/jobs/{id}/review {decision, motivo} — aprobar publica; si no, «cambios» con el motivo. */
 export function useRevisarVacante(id: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -602,7 +813,7 @@ export function useRevisarVacante(id: string) {
       pedir<void>({
         metodo: 'POST',
         ruta: `/admin/jobs/${id}/review`,
-        cuerpo: r,
+        cuerpo: { decision: r.aprobar ? 'approve' : 'reject', motivo: r.motivo ?? '' },
         simulado: () => {
           const v = vacantes.find((x) => x.id === id)
           if (!v) return
@@ -616,15 +827,25 @@ export function useRevisarVacante(id: string) {
   })
 }
 
-/** POST /admin/jobs — la Secretaría publica a nombre de una empresa aprobada (sin revisión). */
+/** POST /admin/jobs — la Secretaría publica a nombre de una empresa aprobada. */
 export function useCrearVacanteAdmin() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (d: DatosVacante & { empresaId: string }) =>
+    mutationFn: (d: DatosVacante & { empresaId: string; empresa?: string }) =>
       pedir<Vacante>({
         metodo: 'POST',
         ruta: '/admin/jobs',
-        cuerpo: d,
+        cuerpo: {
+          puesto: d.puesto,
+          empresa: d.empresa ?? '',
+          sector: d.sector,
+          horario: d.horario,
+          tipoEmpleo: d.tipoEmpleo,
+          ubicacion: d.ubicacion,
+          descripcion: d.descripcion,
+          requisitos: d.requisitos.join('\n'),
+        },
+        adaptar: adaptarVacante,
         simulado: () => {
           const e = empresas.find((x) => x.id === d.empresaId)!
           const v: Vacante = { ...d, id: `va${vacantes.length + 1}`, empresa: e.nombre, estado: 'publicada', publicadaEn: hoy(), actualizada: hoy() }
@@ -636,15 +857,25 @@ export function useCrearVacanteAdmin() {
   })
 }
 
-/** GET /admin/employers?status= */
+/** GET /admin/employers */
 export function useEmpresas(estado?: EstadoEmpresa) {
   return useQuery({
     queryKey: ['empresas', estado ?? 'todas'],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/admin/employers${consulta({ status: estado })}`, simulado: () => empresas.filter((e) => !estado || e.estado === estado) }),
+    queryFn: () =>
+      pedir<Empresa[]>({
+        metodo: 'GET',
+        ruta: `/admin/employers${consulta({ status: estado })}`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw) ? raw.map(adaptarEmpresa) : []
+          // TODO(backend): remove client-side status filter once GET /admin/employers honors ?status=
+          return estado ? items.filter((e) => e.estado === estado) : items
+        },
+        simulado: () => empresas.filter((e) => !estado || e.estado === estado),
+      }),
   })
 }
 
-/** POST /admin/employers/{id}/review {estado, motivo?} — aprobar, rechazar, suspender o reactivar. */
+/** POST /admin/employers/{id}/review {decision, motivo} — aprobar o rechazar. */
 export function useRevisarEmpresa() {
   const qc = useQueryClient()
   return useMutation({
@@ -652,7 +883,7 @@ export function useRevisarEmpresa() {
       pedir<void>({
         metodo: 'POST',
         ruta: `/admin/employers/${r.id}/review`,
-        cuerpo: { estado: r.estado, motivo: r.motivo },
+        cuerpo: { decision: r.estado === 'aprobada' ? 'approve' : 'reject', motivo: r.motivo ?? '' },
         simulado: () => {
           const e = empresas.find((x) => x.id === r.id)
           if (!e) return
@@ -667,17 +898,22 @@ export function useRevisarEmpresa() {
 
 /** GET /admin/hires — postulaciones aceptadas, para llamar a la usuaria y entregar su contacto. */
 export function useContrataciones() {
+  const qc = useQueryClient()
   return useQuery({
     queryKey: ['contrataciones'],
-    queryFn: () =>
-      pedir({
+    queryFn: () => {
+      const vacantesCacheadas = qc.getQueryData<Vacante[]>(['admin-vacantes', 'todas']) ?? []
+      const porId = new Map(vacantesCacheadas.map((v) => [v.id, v]))
+      return pedir<Contratacion[]>({
         metodo: 'GET',
         ruta: '/admin/hires',
+        adaptar: (raw) => (Array.isArray(raw) ? raw.map((item) => adaptarContratacion(item, porId)) : []),
         simulado: (): Contratacion[] =>
           postulaciones
             .filter((p) => p.estado === 'aceptada')
             .map((p) => ({ postulacionId: p.id, folio: p.folio, nombre: p.cv.nombre, puesto: p.puesto, empresa: p.empresa, fecha: p.historial.at(-1)!.fecha, contactoEntregado: !!p.contactoEntregado })),
-      }),
+      })
+    },
   })
 }
 
@@ -689,6 +925,7 @@ export function useEntregarContacto() {
       pedir<void>({
         metodo: 'POST',
         ruta: `/admin/applications/${id}/contact-release`,
+        cuerpo: { motivo: 'Confirmación telefónica con la usuaria', campos: ['telefono'] },
         simulado: () => {
           const p = postulaciones.find((x) => x.id === id)
           if (p) p.contactoEntregado = true

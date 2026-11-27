@@ -1,13 +1,16 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev dev-mock mock sync-contract verify-contract gen gen-check test lint typecheck sec build e2e check
+.PHONY: help dev dev-simulado dev-mock mock sync-contract verify-contract gen gen-check test lint typecheck sec build e2e check
 
 PRISM_VERSION := 5.16.0
 
 help: ## Muestra los comandos disponibles
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'
 
-dev: ## Servidor de desarrollo; dirige /api al proxy del backend (https://localhost:8443)
+dev: ## Servidor de desarrollo; dirige /api al backend local (http://localhost:3000)
 	npm run dev
+
+dev-simulado: ## Servidor de desarrollo con datos simulados en memoria (sin backend)
+	VITE_DATOS_SIMULADOS=true npm run dev
 
 dev-mock: ## Servidor de desarrollo dirigido al servidor simulado (make mock en otra terminal)
 	VITE_API_PROXY_TARGET=http://localhost:4010 npm run dev

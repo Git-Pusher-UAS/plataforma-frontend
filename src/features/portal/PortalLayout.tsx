@@ -4,6 +4,7 @@ import { BriefcaseBusiness, CalendarDays, HandHeart, House, LogOut, UserRound } 
 import { quickExit } from '@/features/ayuda/quickExit'
 import { useQuickExitShortcut } from '@/features/ayuda/useQuickExitShortcut'
 import { useSesion } from '@/features/identidad/sesion'
+import { Cargando } from '@/shared/ui/Estados'
 
 /** Destino de «Salir» en el portal: U-17, página neutra. replace() evita volver con «atrás». */
 export const SALIDA_PORTAL = '/recetas'
@@ -58,7 +59,8 @@ export function PortalLayout({ children }: { children?: ReactNode }) {
 
 /** Protege las pantallas que necesitan sesión de usuaria. */
 export function RequiereUsuaria() {
-  const { usuaria } = useSesion()
+  const { usuaria, cargandoSesion } = useSesion()
+  if (cargandoSesion) return <Cargando />
   if (!usuaria) return <Navigate to="/u/entrar" replace />
   return <Outlet />
 }
