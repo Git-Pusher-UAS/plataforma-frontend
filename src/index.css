@@ -313,10 +313,10 @@ button {
     background: rgba(53, 36, 79, .45);
   }
 
-  /* Inicio y Ayuda viven en la barra inferior*/
+  /* Inicio y Mi cuenta viven en la barra inferior */
   .menu-lateral .oculto-en-movil { display: none; }
 
-  /* Barra inferior: Inicio, Mapa de calor y Ayuda */
+  /* Barra inferior: Inicio, acceso principal del rol y Mi cuenta */
   .barra-inferior {
     position: fixed;
     inset: auto 0 0 0;

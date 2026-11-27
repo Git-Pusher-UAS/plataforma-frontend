@@ -46,7 +46,7 @@ import { PortalLayout, RequiereUsuaria } from '@/features/portal/PortalLayout'
 const ATENCION = ['trabajo-social', 'psicologia', 'juridico'] as const
 
 export const routes: RouteObject[] = [
-  { path: '/', element: <RaizPage /> }, // U-01 sin sesión · P-05 / K-01 / D-01 con sesión de personal
+  { path: '/', element: <RaizPage /> }, // P-01 (/acceso) en PC · U-01 en móvil · P-05 / K-01 / D-01 con sesión de personal
 
   // ---------- A · Portal de usuarias (celular) ----------
   {

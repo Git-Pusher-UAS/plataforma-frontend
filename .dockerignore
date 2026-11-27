@@ -7,4 +7,6 @@ playwright-report
 .env
 .env.*
 *.pem
+*.crt
 *.key
+test-results

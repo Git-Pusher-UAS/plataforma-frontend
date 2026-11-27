@@ -8,7 +8,7 @@ import { USAR_SIMULADOS } from '@/shared/lib/servicio'
 import { Consulta } from '@/shared/ui/Estados'
 import { Encabezado } from '@/shared/ui/Encabezado'
 
-/** Marco de las pantallas sin sesión del personal: solo Salir y el directorio. */
+/** Marco de las pantallas sin sesión del personal: solo Salir y enlace al portal de usuarias. */
 function MarcoAcceso({ children }: { children: ReactNode }) {
   return (
     <div className="acceso">
@@ -19,7 +19,7 @@ function MarcoAcceso({ children }: { children: ReactNode }) {
       <div className="acceso-contenido">
         <main className="acceso-tarjeta tarjeta">{children}</main>
         <p className="acceso-pie">
-          <Link to="/directorio">Directorio de ayuda</Link> · <Link to="/u">Portal de usuarias</Link>
+          <Link to="/u">Portal de usuarias</Link>
         </p>
       </div>
     </div>

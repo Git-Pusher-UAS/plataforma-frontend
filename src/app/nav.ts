@@ -10,7 +10,6 @@ import {
   Map as MapIcon,
   MapPinned,
   MessageSquareHeart,
-  Phone,
   ScrollText,
   UserPlus,
   UserRound,
@@ -32,15 +31,13 @@ export type ItemMenu = {
 }
 
 const INICIO: ItemMenu = { to: '/', label: 'Inicio', icon: House, inferior: 1 }
-const CUENTA: ItemMenu = { to: '/cuenta', label: 'Mi cuenta', icon: UserRound }
-const AYUDA: ItemMenu = { to: '/ayuda', label: 'Ayuda', icon: Phone, inferior: 3 }
+const CUENTA: ItemMenu = { to: '/cuenta', label: 'Mi cuenta', icon: UserRound, inferior: 3 }
 
 const ATENCION: ItemMenu[] = [
   INICIO,
   { to: '/expedientes', label: 'Expedientes', icon: FolderOpen, inferior: 2 },
   { to: '/canalizaciones', label: 'Canalizaciones', icon: ArrowRightLeft },
   { to: '/pendientes', label: 'Pendientes', icon: WifiOff },
-  AYUDA,
   CUENTA,
 ]
 
@@ -55,7 +52,6 @@ export const MENU_POR_ROL: Record<Rol, ItemMenu[]> = {
     { to: '/capacitacion/calendario', label: 'Calendario', icon: ClipboardList },
     { to: '/capacitacion/visitas', label: 'Visitas', icon: MapPinned },
     { to: '/capacitacion/bolsa', label: 'Bolsa de trabajo', icon: BriefcaseBusiness },
-    AYUDA,
     CUENTA,
   ],
   administracion: [
@@ -66,7 +62,6 @@ export const MENU_POR_ROL: Record<Rol, ItemMenu[]> = {
     { to: '/administracion/bitacora', label: 'Bitácora', icon: ScrollText },
     { to: '/administracion/personal', label: 'Personal', icon: Users },
     { to: '/administracion/opinion', label: 'Opinión', icon: MessageSquareHeart },
-    AYUDA,
     CUENTA,
   ],
 }

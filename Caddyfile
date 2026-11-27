@@ -11,17 +11,71 @@
 
 	header {
 		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
 		-Server
 	}
 
-	# Archivos con hash en el nombre: caché larga
-	@assets path /assets/*
-	header @assets Cache-Control "public, max-age=31536000, immutable"
+	# Bloquear archivos ocultos (salvo /.well-known/) y rutas sensibles con 404 genérico
+	# (sin 403 ni fallback a index.html) para no confirmar existencia ni filtrar estructura.
+	@dotfiles {
+		path_regexp (^|/)\.
+		not path /.well-known /.well-known/*
+	}
+	@rutas_bloqueadas {
+		path_regexp (?i)(^|/)(package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|tsconfig[^/]*\.json|vite\.config[^/]*|eslint\.config[^/]*|playwright\.config[^/]*|lefthook\.yml|Makefile|Dockerfile|Caddyfile|docker-compose[^/]*)($|/)
+	}
+	@directorios_bloqueados {
+		path_regexp (?i)^/(node_modules|src|contract|docs|e2e|scripts|@vite|@fs|@id|home|etc|var|usr|opt|root|proc|sys)(/|$)
+	}
+	@md_raiz {
+		path_regexp (?i)^/[^/]+\.md$
+	}
+	@extensiones_bloqueadas {
+		path_regexp (?i)\.(map|pem|crt|key|log|sql|bak|swp)$
+	}
+	handle @dotfiles {
+		respond "Not Found" 404
+	}
+	handle @rutas_bloqueadas {
+		respond "Not Found" 404
+	}
+	handle @directorios_bloqueados {
+		respond "Not Found" 404
+	}
+	handle @md_raiz {
+		respond "Not Found" 404
+	}
+	handle @extensiones_bloqueadas {
+		respond "Not Found" 404
+	}
 
-	# El service worker y el manifiesto nunca se cachean por mucho tiempo
-	@sw path /sw.js /manifest.webmanifest
-	header @sw Cache-Control "no-cache"
+	handle {
+		# Archivos con hash en el nombre: caché larga
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
 
-	try_files {path} /index.html
-	file_server
+		# El service worker y el manifiesto nunca se cachean por mucho tiempo
+		@sw path /sw.js /manifest.webmanifest
+		header @sw Cache-Control "no-cache"
+
+		# En PC sin sesión de personal activa, la raíz redirige a /acceso según los headers HTTP.
+		# En móvil (Sec-CH-UA-Mobile: ?1 o User-Agent móvil) se sirve la SPA en / (Bienvenida).
+		header / Vary "User-Agent, Sec-CH-UA-Mobile"
+		@pc_raiz {
+			path /
+			not header_regexp Cookie (^|;\s*)sai_session=
+			not header Sec-CH-UA-Mobile ?1
+			not header_regexp User-Agent "(?i)(Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Mobi)"
+		}
+		redir @pc_raiz /acceso 302
+
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle_errors {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "{err.status_code} {err.status_text}" {err.status_code}
+	}
 }

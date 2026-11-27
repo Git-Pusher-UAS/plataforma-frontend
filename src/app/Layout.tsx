@@ -4,7 +4,6 @@ import { Menu, PanelLeftOpen, X } from 'lucide-react'
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router'
 import { MENU_POR_ROL, barraInferior } from '@/app/nav'
 import { QuickExitButton } from '@/features/ayuda/QuickExitButton'
-import { NecesitoAyudaPersonal } from '@/features/ayuda/NecesitoAyudaPersonal'
 import { ROLES, useSesion } from '@/features/identidad/sesion'
 import { UpdatePrompt } from '@/pwa/UpdatePrompt'
 import { Cargando } from '@/shared/ui/Estados'
@@ -43,7 +42,7 @@ function useVencimientoPorInactividad() {
   }, [cerrar, navegar])
 }
 
-/** Panel del personal: menú según el rol, etiqueta de área visible, Salir y Necesito ayuda siempre a la vista. */
+/** Panel del personal: menú según el rol, etiqueta de área visible y Salir siempre a la vista. */
 export function Layout({ children }: { children?: ReactNode }) {
   const { personal, cargandoSesion } = useSesion()
   const { pathname } = useLocation()
@@ -160,7 +159,6 @@ export function Layout({ children }: { children?: ReactNode }) {
           </span>
 
           <div className="salida-rapida">
-            {personal.rol !== 'administracion' && <NecesitoAyudaPersonal />}
             <QuickExitButton />
           </div>
         </header>

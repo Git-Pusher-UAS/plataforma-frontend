@@ -32,11 +32,13 @@ describe('acceso del personal', () => {
     expect(await screen.findByText('Personal de la Secretaría de Mujeres')).toBeInTheDocument()
 
     const tarjeta = screen.getByRole('main')
-    const pie = screen.getByRole('link', { name: 'Directorio de ayuda' }).closest('p')
+    const portalLink = screen.getByRole('link', { name: 'Portal de usuarias' })
+    const pie = portalLink.closest('p')
     expect(pie).toBeInTheDocument()
     expect(tarjeta.parentElement).toBe(pie?.parentElement)
     expect(tarjeta.parentElement).toHaveClass('acceso-contenido')
-    expect(screen.getByRole('link', { name: 'Portal de usuarias' })).toHaveAttribute('href', '/u')
+    expect(portalLink).toHaveAttribute('href', '/u')
+    expect(screen.queryByRole('link', { name: 'Directorio de ayuda' })).not.toBeInTheDocument()
   })
 
   it('alterna la visibilidad de la contraseña de forma accesible', async () => {

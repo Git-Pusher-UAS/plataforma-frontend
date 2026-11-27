@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -31,7 +31,24 @@ function renderAt(path: string, personal?: Personal, usuaria?: { alias: string }
 }
 
 describe('rutas', () => {
-  it('la raíz / sin sesión muestra la bienvenida con ayuda y salida rápida', async () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('la raíz / sin sesión en PC redirige a /acceso con enlace al portal y salida rápida', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    )
+    renderAt('/')
+    expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Portal de usuarias' })).toHaveAttribute('href', '/u')
+    expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
+  })
+
+  it('la raíz / sin sesión en móvil muestra la bienvenida con ayuda y salida rápida', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    )
     renderAt('/')
     expect(await screen.findByRole('heading', { name: /acompañarte/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument()
@@ -40,6 +57,15 @@ describe('rutas', () => {
     expect(screen.getByRole('link', { name: 'Soy personal de la Secretaría' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Soy una empresa aliada' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
+  })
+
+  it('en PC, el acceso directo /u abre la bienvenida y el logo SAI permanece en /u', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    )
+    renderAt('/u')
+    expect(await screen.findByRole('heading', { name: /acompañarte/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/u')
   })
 
   it('sin sesión, el panel lleva a la pantalla de acceso con la salida rápida visible', async () => {
@@ -57,7 +83,7 @@ describe('rutas', () => {
     renderAt('/', persona('capacitacion'))
     expect(await screen.findByRole('heading', { name: /hola, persona/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /necesito ayuda/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /necesito ayuda/i })).not.toBeInTheDocument()
   })
 
   it('el menú de Capacitación no ofrece expedientes', async () => {
@@ -264,21 +290,27 @@ describe('rutas', () => {
     expect(await screen.findByRole('heading', { name: 'Escribe tu código' })).toBeInTheDocument()
   })
 
-  it('administración oculta «Necesito ayuda», conserva «Salida rápida» y usa el contenedor dedicado', async () => {
+  it('administración oculta «Necesito ayuda» y «Ayuda», conserva «Salida rápida» y usa el contenedor dedicado', async () => {
     renderAt('/', persona('administracion'))
     expect(await screen.findByRole('heading', { name: /hola, persona/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /necesito ayuda/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ayuda' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
     expect(screen.getByRole('main')).toHaveClass('pagina', 'admin-pagina')
     expect(screen.getByText(/cifras de atención, origen y áreas por periodo/i)).toBeInTheDocument()
   })
 
-  it('los demás roles conservan «Necesito ayuda» sin la clase de administración', async () => {
-    renderAt('/', persona('psicologia'))
-    expect(await screen.findByRole('heading', { name: /hola, persona/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /necesito ayuda/i })).toBeInTheDocument()
-    expect(screen.getByRole('main')).not.toHaveClass('admin-pagina')
-  })
+  it.each<Rol>(['trabajo-social', 'psicologia', 'juridico', 'capacitacion'])(
+    '%s tampoco muestra «Necesito ayuda» ni «Ayuda» y conserva «Salida rápida»',
+    async (rol) => {
+      renderAt('/', persona(rol))
+      expect(await screen.findByRole('heading', { name: /hola, persona/i })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /necesito ayuda/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Ayuda' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
+      expect(screen.getByRole('main')).not.toHaveClass('admin-pagina')
+    },
+  )
 
   it('en el panel, el botón de menú en la barra solo aparece cuando el menú de escritorio está oculto', async () => {
     const u = userEvent.setup()
