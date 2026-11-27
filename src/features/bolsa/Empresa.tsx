@@ -29,7 +29,7 @@ import { fechaLarga, hora12 } from '@/features/capacitacion/api'
 import { useSesion } from '@/features/identidad/sesion'
 import { Dialogo } from '@/shared/ui/Dialogo'
 import { Encabezado } from '@/shared/ui/Encabezado'
-import { Consulta } from '@/shared/ui/Estados'
+import { Cargando, Consulta } from '@/shared/ui/Estados'
 import { Segmentos } from '@/shared/ui/Pestanas'
 import { fecha } from '@/shared/lib/formato'
 
@@ -81,7 +81,8 @@ export function EmpresaLayout() {
 
 /** Pantallas de gestión: solo empresas aprobadas. Las demás van a su solicitud. */
 export function RequiereEmpresa() {
-  const { empresa } = useSesion()
+  const { empresa, cargandoSesion } = useSesion()
+  if (cargandoSesion) return <Cargando />
   if (!empresa) return <Navigate to="/e" replace />
   if (empresa.estado !== 'aprobada') return <Navigate to="/e/solicitud" replace />
   return <Outlet />
@@ -89,7 +90,8 @@ export function RequiereEmpresa() {
 
 /** Pantallas de la solicitud: cualquier empresa con sesión, aprobada o no. */
 export function RequiereSolicitante() {
-  const { empresa } = useSesion()
+  const { empresa, cargandoSesion } = useSesion()
+  if (cargandoSesion) return <Cargando />
   if (!empresa) return <Navigate to="/e" replace />
   return <Outlet />
 }

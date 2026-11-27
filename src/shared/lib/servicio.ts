@@ -3,16 +3,20 @@ import { apiFetch } from '@/api/client'
 /**
  * Capa única por la que pasan todas las llamadas de las pantallas.
  *
- * Mientras el backend no publique el endpoint en contract/openapi.yaml, cada servicio
- * responde con datos simulados (ficticios, sin datos reales). Para usar la API real:
- *   VITE_DATOS_SIMULADOS=false npm run dev    (o make dev-mock para el servidor Prism)
- *
- * Cada llamada declara el endpoint que necesitará. La lista completa, marcando cuáles
- * ya existen en el contrato, está en docs/ENDPOINTS_REQUERIDOS_SAI.md.
+ * En desarrollo y producción apunta por defecto a la API real (/api).
+ * En modo test (Vitest) usa datos simulados salvo que VITE_DATOS_SIMULADOS='false'.
+ * Para trabajar sin backend en desarrollo: VITE_DATOS_SIMULADOS=true npm run dev
  */
-export const USAR_SIMULADOS = import.meta.env.VITE_DATOS_SIMULADOS !== 'false'
+export function esModoSimulado(): boolean {
+  return (
+    import.meta.env.VITE_DATOS_SIMULADOS === 'true' ||
+    (import.meta.env.MODE === 'test' && import.meta.env.VITE_DATOS_SIMULADOS !== 'false')
+  )
+}
 
-const PREFIJO = '/api/v1'
+export const USAR_SIMULADOS = esModoSimulado()
+
+const PREFIJO = (import.meta.env.VITE_API_PREFIX ?? '/api').replace(/\/$/, '')
 const LATENCIA_MS = import.meta.env.MODE === 'test' ? 0 : 250
 
 type Metodo = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
@@ -21,20 +25,47 @@ export type Peticion<T> = {
   metodo: Metodo
   ruta: string
   cuerpo?: unknown
-  /** Respuesta simulada mientras el endpoint no existe. */
+  headers?: Record<string, string>
+  skipUnauthorizedHandler?: boolean
+  /** Adapta la respuesta real del backend al tipo que consumen las pantallas. */
+  adaptar?: (raw: unknown) => T
+  /** Respuesta simulada mientras se trabaja sin backend o en pruebas. */
   simulado: () => T
 }
 
-export async function pedir<T>({ metodo, ruta, cuerpo, simulado }: Peticion<T>): Promise<T> {
-  if (USAR_SIMULADOS) {
+export function prefijoApi(): string {
+  return PREFIJO
+}
+
+export function formatIfMatch(versionTag: string): string {
+  const trimmed = versionTag.trim()
+  if (!trimmed) return trimmed
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) return trimmed
+  if (trimmed.startsWith('W/"') && trimmed.endsWith('"')) return trimmed
+  return `"${trimmed}"`
+}
+
+export async function pedir<T>({
+  metodo,
+  ruta,
+  cuerpo,
+  headers,
+  skipUnauthorizedHandler,
+  adaptar,
+  simulado,
+}: Peticion<T>): Promise<T> {
+  if (esModoSimulado()) {
     await new Promise((r) => setTimeout(r, LATENCIA_MS))
     // Copia para que la pantalla no modifique los datos simulados compartidos.
     return structuredClone(simulado())
   }
-  return apiFetch<T>(`${PREFIJO}${ruta}`, {
+  const raw = await apiFetch<unknown>(`${PREFIJO}${ruta}`, {
     method: metodo,
+    headers,
+    skipUnauthorizedHandler,
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   })
+  return adaptar ? adaptar(raw) : (raw as T)
 }
 
 /** Construye la cadena de consulta omitiendo valores vacíos. */

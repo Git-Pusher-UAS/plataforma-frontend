@@ -7,6 +7,7 @@ import { QuickExitButton } from '@/features/ayuda/QuickExitButton'
 import { NecesitoAyudaPersonal } from '@/features/ayuda/NecesitoAyudaPersonal'
 import { ROLES, useSesion } from '@/features/identidad/sesion'
 import { UpdatePrompt } from '@/pwa/UpdatePrompt'
+import { Cargando } from '@/shared/ui/Estados'
 
 // Estructura y comportamiento del menú tomados del diseño móvil de la rama modificaciones_css:
 // cajón lateral en celular con 3 accesos fijos abajo; en escritorio, menú que se oculta y cambia de ancho.
@@ -44,7 +45,7 @@ function useVencimientoPorInactividad() {
 
 /** Panel del personal: menú según el rol, etiqueta de área visible, Salir y Necesito ayuda siempre a la vista. */
 export function Layout({ children }: { children?: ReactNode }) {
-  const { personal } = useSesion()
+  const { personal, cargandoSesion } = useSesion()
   const { pathname } = useLocation()
   const [abierto, setAbierto] = useState(false) // cajón del menú en celular
   const [oculto, setOculto] = useState(false) // menú oculto en escritorio
@@ -62,6 +63,13 @@ export function Layout({ children }: { children?: ReactNode }) {
     return () => document.removeEventListener('keydown', alTeclear)
   }, [abierto])
 
+  if (cargandoSesion) {
+    return (
+      <main className="pagina">
+        <Cargando />
+      </main>
+    )
+  }
   if (!personal) return <Navigate to="/acceso" replace state={{ desde: pathname }} />
 
   const menu = MENU_POR_ROL[personal.rol]

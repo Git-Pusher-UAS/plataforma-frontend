@@ -29,7 +29,7 @@ function MarcoAcceso({ children }: { children: ReactNode }) {
 /** P-01 · Acceso */
 export function AccesoPage() {
   const login = useLoginPersonal()
-  const { iniciarPreautenticacion } = useSesion()
+  const { iniciarPreautenticacion, iniciarPersonal } = useSesion()
   const navegar = useNavigate()
   const desde = (useLocation().state as { desde?: string } | null)?.desde
   const [usuario, setUsuario] = useState('')
@@ -43,6 +43,11 @@ export function AccesoPage() {
       { usuario, contrasena },
       {
         onSuccess: (r) => {
+          if (r.kind === 'authenticated') {
+            iniciarPersonal(r.personal)
+            navegar(desde ?? '/', { replace: true })
+            return
+          }
           iniciarPreautenticacion(usuario)
           navegar('/acceso/verificacion', { state: { challengeId: r.challengeId, rol, desde } })
         },

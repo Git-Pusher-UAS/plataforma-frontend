@@ -3,9 +3,10 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// En desarrollo, las rutas /api se dirigen al proxy del backend (Caddy local).
+// En desarrollo, las rutas /api se dirigen al proxy del backend (Hackathon-app).
+// Local: http://localhost:3000 (Docker Compose: http://localhost:3001).
 // Para trabajar contra el servidor simulado: VITE_API_PROXY_TARGET=http://localhost:4010
-const apiTarget = process.env.VITE_API_PROXY_TARGET ?? 'https://localhost:8443'
+const apiTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000'
 
 export default defineConfig({
   plugins: [
