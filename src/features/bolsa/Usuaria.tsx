@@ -130,7 +130,7 @@ export function DetalleVacantePage() {
   const [confirmar, setConfirmar] = useState(false)
   const enviar = () =>
     postular.mutate(vacanteId, {
-      onSuccess: (p) => navegar(`/u/empleo/postulaciones/${p.id}`, { state: { aviso: 'Listo, tu postulación se envió.' } }),
+      onSuccess: (p) => navegar(p.id ? `/u/empleo/postulaciones/${p.id}` : '/u/empleo/postulaciones', { state: { aviso: 'Listo, tu postulación se envió.' } }),
     })
   return (
     <section className="pila">
@@ -467,7 +467,7 @@ function AsistenteCv({ inicial }: { inicial: Borrador }) {
       onSuccess: () => {
         if (!postularA) return navegar('/u/empleo/cv', { state: { aviso: 'Tu CV quedó guardado.' } })
         postular.mutate(postularA, {
-          onSuccess: (p) => navegar(`/u/empleo/postulaciones/${p.id}`, { state: { aviso: 'Listo, tu CV quedó guardado y tu postulación se envió.' } }),
+          onSuccess: (p) => navegar(p.id ? `/u/empleo/postulaciones/${p.id}` : '/u/empleo/postulaciones', { state: { aviso: 'Listo, tu CV quedó guardado y tu postulación se envió.' } }),
         })
       },
     })

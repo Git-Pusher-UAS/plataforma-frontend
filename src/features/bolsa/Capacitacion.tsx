@@ -319,7 +319,12 @@ export function NuevaVacantePage() {
             <span className="campo-ayuda">Solo aparecen empresas aprobadas.</span>
           </div>
         }
-        onEnviar={(d) => crear.mutate({ ...d, empresaId }, { onSuccess: () => navegar('/capacitacion/bolsa') })}
+        onEnviar={(d) =>
+          crear.mutate(
+            { ...d, empresaId, empresa: empresas.data?.find((e) => e.id === empresaId)?.nombre },
+            { onSuccess: () => navegar('/capacitacion/bolsa') },
+          )
+        }
       />
     </section>
   )
