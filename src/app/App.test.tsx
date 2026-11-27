@@ -31,8 +31,19 @@ function renderAt(path: string, personal?: Personal, usuaria?: { alias: string }
 }
 
 describe('rutas', () => {
-  it('sin sesión, el panel lleva a la pantalla de acceso con la salida rápida visible', async () => {
+  it('la raíz / sin sesión muestra la bienvenida con ayuda y salida rápida', async () => {
     renderAt('/')
+    expect(await screen.findByRole('heading', { name: /acompañarte/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Crear mi cuenta' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Necesito ayuda' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Soy personal de la Secretaría' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Soy una empresa aliada' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
+  })
+
+  it('sin sesión, el panel lleva a la pantalla de acceso con la salida rápida visible', async () => {
+    renderAt('/expedientes')
     expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
   })

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router'
 import { BriefcaseBusiness, CalendarDays, HandHeart, House, LogOut, UserRound } from 'lucide-react'
 import { quickExit } from '@/features/ayuda/quickExit'
@@ -16,7 +17,7 @@ const MENU = [
 ]
 
 /** Marco del portal de usuarias: primero celular (360 px), texto de 17 px, Salir siempre visible. */
-export function PortalLayout() {
+export function PortalLayout({ children }: { children?: ReactNode }) {
   useQuickExitShortcut(salir)
   const { usuaria } = useSesion()
   const { pathname } = useLocation()
@@ -26,7 +27,7 @@ export function PortalLayout() {
   return (
     <div className="portal">
       <header className="portal-barra">
-        <Link to={usuaria ? '/u/inicio' : '/u'} className="marca" aria-label="Inicio">
+        <Link to={usuaria ? '/u/inicio' : '/'} className="marca" aria-label="Inicio">
           SAI
         </Link>
         <button type="button" className="boton-salir" onClick={salir} aria-label="Salida rápida">
@@ -34,7 +35,7 @@ export function PortalLayout() {
         </button>
       </header>
       <main className="portal-pagina">
-        <Outlet />
+        {children ?? <Outlet />}
       </main>
       {mostrarFlotante && (
         <Link to="/u/ayuda" className="ayuda-flotante" aria-label="Necesito ayuda">
