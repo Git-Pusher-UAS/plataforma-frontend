@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { QuickExitButton } from '@/features/ayuda/QuickExitButton'
 import { useCerrarSesion, useLoginPersonal, useMisSesiones, useVerificarCodigo } from '@/features/identidad/api'
@@ -15,10 +16,12 @@ function MarcoAcceso({ children }: { children: ReactNode }) {
         <span className="menu-marca-oscura">SAI</span>
         <QuickExitButton />
       </header>
-      <main className="acceso-tarjeta tarjeta">{children}</main>
-      <p className="acceso-pie">
-        <Link to="/directorio">Directorio de ayuda</Link> · <Link to="/u">Portal de usuarias</Link>
-      </p>
+      <div className="acceso-contenido">
+        <main className="acceso-tarjeta tarjeta">{children}</main>
+        <p className="acceso-pie">
+          <Link to="/directorio">Directorio de ayuda</Link> · <Link to="/u">Portal de usuarias</Link>
+        </p>
+      </div>
     </div>
   )
 }
@@ -31,6 +34,7 @@ export function AccesoPage() {
   const desde = (useLocation().state as { desde?: string } | null)?.desde
   const [usuario, setUsuario] = useState('')
   const [contrasena, setContrasena] = useState('')
+  const [mostrar, setMostrar] = useState(false)
   const [rol, setRol] = useState<Rol>('trabajo-social')
 
   const enviar = (e: FormEvent) => {
@@ -49,7 +53,7 @@ export function AccesoPage() {
     <MarcoAcceso>
       <form className="pila" onSubmit={enviar}>
         <div>
-          <p className="etiqueta-peque">Personal de la Secretaría</p>
+          <p className="etiqueta-peque">Personal de la Secretaría de Mujeres</p>
           <h1>Entrar</h1>
         </div>
         <div className="campo">
@@ -58,7 +62,25 @@ export function AccesoPage() {
         </div>
         <div className="campo">
           <label htmlFor="contrasena">Contraseña</label>
-          <input id="contrasena" type="password" autoComplete="current-password" value={contrasena} onChange={(e) => setContrasena(e.target.value)} required />
+          <div className="campo-contrasena">
+            <input
+              id="contrasena"
+              type={mostrar ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={contrasena}
+              onChange={(e) => setContrasena(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              className="boton-ver-contrasena"
+              aria-label={mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-pressed={mostrar}
+              onClick={() => setMostrar((v) => !v)}
+            >
+              {mostrar ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
+            </button>
+          </div>
         </div>
         {USAR_SIMULADOS && (
           <div className="campo demo">
