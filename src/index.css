@@ -192,6 +192,8 @@ button {
 .panel { --menu-ancho: 240px; font-size: 15px; min-height: 100dvh; }
 .panel.redimensionando { user-select: none; cursor: col-resize; }
 
+/* Menú: cajón en celular, barra inferior y lateral redimensionable en escritorio */
+
 .menu-lateral {
   position: relative;
   display: flex;
@@ -200,7 +202,12 @@ button {
   padding: 1.5rem 1rem;
   background: var(--sai-ciruela);
   color: var(--sai-crema);
+  /* Red de seguridad: si algo no cabe (zoom alto), se desplaza en lugar de cortarse. */
+  overflow: auto;
+  scrollbar-width: none;
 }
+.menu-lateral::-webkit-scrollbar { width: 6px; height: 0; }
+.menu-lateral::-webkit-scrollbar-thumb { background: var(--sai-lavanda); border-radius: 999px; }
 
 .menu-cabecera {
   display: flex;
@@ -226,6 +233,7 @@ button {
 }
 
 .menu-item {
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   gap: .75rem;
@@ -235,6 +243,7 @@ button {
   color: var(--sai-crema);
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 .menu-item[aria-current="page"] {
   background: var(--sai-lavanda);
@@ -263,6 +272,20 @@ button {
 
 .barra-inferior { display: none; }
 
+/* En celular las opciones largas solo muestran el ícono; el texto sigue para lectores de pantalla. */
+@media (max-width: 767px) {
+  .menu-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.panel-cuerpo { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); } /* espacio para la barra inferior */
+
 /* Escritorio */
 @media (min-width: 768px) {
   .panel { display: grid; grid-template-columns: var(--menu-ancho) 1fr; }
@@ -271,6 +294,7 @@ button {
 
   .menu-lateral { position: sticky; top: 0; height: 100dvh; overflow-y: auto; }
   .barra .btn-menu-movil { display: none; }
+  .panel-cuerpo { padding-bottom: 0; }
 }
 
 /* Celular */
