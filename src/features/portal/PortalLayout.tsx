@@ -28,9 +28,12 @@ export function PortalLayout({ children }: { children?: ReactNode }) {
   return (
     <div className="portal">
       <header className="portal-barra">
-        <Link to={usuaria ? '/u/inicio' : '/u'} className="marca" aria-label="Inicio">
-          <Logo /> SAI
-        </Link>
+        <span className="marca-grupo">
+          <Logo />
+          <Link to={usuaria ? '/u/inicio' : '/u'} className="marca" aria-label="Inicio">
+            SAI
+          </Link>
+        </span>
         <button type="button" className="boton-salir" onClick={salir} aria-label="Salida rápida">
           <LogOut size={18} aria-hidden="true" /> Salir
         </button>

@@ -228,6 +228,14 @@ describe('rutas', () => {
     expect(screen.getByRole('link', { name: '668 100 0083' })).toHaveAttribute('href', 'tel:6681000083')
   })
 
+  it('el logo lleva al sitio del Ayuntamiento de Ahome en otra pestaña', async () => {
+    renderAt('/acceso')
+    const logo = await screen.findByRole('link', { name: /Ayuntamiento de Ahome/ })
+    expect(logo).toHaveAttribute('href', 'https://ahome.gob.mx')
+    expect(logo).toHaveAttribute('target', '_blank')
+    expect(logo).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+  })
+
   it('la usuaria entra con su número de celular', async () => {
     const u = userEvent.setup()
     renderAt('/u/entrar')

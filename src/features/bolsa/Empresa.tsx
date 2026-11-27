@@ -42,9 +42,12 @@ export function EmpresaLayout() {
   return (
     <div className="empresa">
       <header className="empresa-barra">
-        <Link to={!empresa ? '/e' : empresa.estado === 'aprobada' ? '/e/vacantes' : '/e/solicitud'} className="marca">
-          <Logo /> SAI <span className="empresa-sub">Empresas</span>
-        </Link>
+        <span className="marca-grupo">
+          <Logo />
+          <Link to={!empresa ? '/e' : empresa.estado === 'aprobada' ? '/e/vacantes' : '/e/solicitud'} className="marca">
+            SAI <span className="empresa-sub">Empresas</span>
+          </Link>
+        </span>
         {empresa && (
           <>
             <nav className="empresa-menu" aria-label="Empresa">
