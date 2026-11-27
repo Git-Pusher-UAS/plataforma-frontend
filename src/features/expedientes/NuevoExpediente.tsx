@@ -59,6 +59,9 @@ export function ComprobarCurpPage() {
   }
   return (
     <section className="pila angosta">
+      <Link to="/expedientes" className="enlace-volver">
+        ← Expedientes
+      </Link>
       <Encabezado antetitulo="Nuevo expediente" titulo="Comprobar CURP">
         Antes de registrar, revisamos que la persona no tenga ya un expediente.
       </Encabezado>

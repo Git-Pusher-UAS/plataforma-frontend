@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { ArrowLeft } from 'lucide-react'
 import { useEncuesta, useEncuestasPendientes, useResponderEncuesta } from '@/features/encuestas/api'
 import { Consulta } from '@/shared/ui/Estados'
 
@@ -8,6 +9,9 @@ export function PendientesUsuariaPage() {
   const q = useEncuestasPendientes()
   return (
     <section className="pila">
+      <Link to="/u/inicio" className="enlace-volver">
+        <ArrowLeft size={18} aria-hidden="true" /> Inicio
+      </Link>
       <div>
         <p className="etiqueta-peque">Pendientes</p>
         <h1>Tus pendientes</h1>
