@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
-import { useCrearCuentaUsuaria, useEntrarUsuaria, useVerificarUsuaria } from '@/features/identidad/api'
+import { useCrearCuentaUsuaria, useEntrarUsuaria, useVerificarUsuaria, type EntradaUsuaria } from '@/features/identidad/api'
 import { useSesion } from '@/features/identidad/sesion'
+import { Segmentos } from '@/shared/ui/Pestanas'
 
 /** U-01 · Bienvenida */
 export function BienvenidaPage() {
@@ -27,36 +28,84 @@ export function BienvenidaPage() {
       <Link to="/acceso" className="enlace-discreto">
         Soy personal de la Secretaría
       </Link>
+      <Link to="/e" className="enlace-discreto">
+        Soy una empresa aliada
+      </Link>
     </section>
   )
 }
 
-/** U-02 · Entrar: CURP o nombre completo como identificador (RF-02). */
+type FormaEntrar = 'telefono' | 'curp' | 'correo'
+const FORMAS_ENTRAR: { valor: FormaEntrar; texto: string }[] = [
+  { valor: 'telefono', texto: 'Celular' },
+  { valor: 'curp', texto: 'CURP' },
+  { valor: 'correo', texto: 'Correo' },
+]
+const CURP = /^[A-Z]{4}\d{6}[HMX][A-Z]{5}[A-Z0-9]\d$/
+const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * U-02 · Entrar con el celular, la CURP o el correo (RF-02). Siempre llega un código por SMS al celular registrado.
+ * No se usa el nombre completo: varias personas pueden llamarse exactamente igual.
+ */
 export function EntrarPage() {
   const entrar = useEntrarUsuaria()
   const navegar = useNavigate()
-  const [identificador, setIdentificador] = useState('')
+  const [forma, setForma] = useState<FormaEntrar>('telefono')
+  const [valores, setValores] = useState({ telefono: '', curp: '', correo: '' })
+  const curp = valores.curp.toUpperCase().replace(/\s/g, '')
+  const correo = valores.correo.trim().toLowerCase()
+  const listo = forma === 'telefono' ? valores.telefono.length === 10 : forma === 'curp' ? CURP.test(curp) : CORREO.test(correo)
   const enviar = (e: FormEvent) => {
     e.preventDefault()
-    entrar.mutate(
-      { identificador: identificador.trim() },
-      { onSuccess: (r) => navegar('/u/codigo', { state: r }) },
-    )
+    if (!listo) return
+    const datos: EntradaUsuaria =
+      forma === 'telefono' ? { tipo: 'telefono', telefono: valores.telefono } : forma === 'curp' ? { tipo: 'curp', curp } : { tipo: 'correo', correo }
+    entrar.mutate(datos, { onSuccess: (r) => navegar('/u/codigo', { state: r }) })
   }
   return (
     <form className="pila" onSubmit={enviar}>
       <h1>Entrar</h1>
-      <div className="campo">
-        <label htmlFor="identificador">CURP o nombre completo</label>
-        <input id="identificador" autoComplete="off" value={identificador} onChange={(e) => setIdentificador(e.target.value)} required minLength={3} />
-        <span className="campo-ayuda">Te enviaremos un código por mensaje a tu teléfono.</span>
-      </div>
+      <Segmentos opciones={FORMAS_ENTRAR} valor={forma} onCambio={setForma} etiqueta="Entrar con" />
+      {forma === 'telefono' && (
+        <div className="campo">
+          <label htmlFor="telefono">Número de celular</label>
+          <input
+            id="telefono"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="off"
+            value={valores.telefono}
+            onChange={(e) => setValores({ ...valores, telefono: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+            required
+            minLength={10}
+            maxLength={10}
+            aria-describedby="entrar-ayuda"
+          />
+        </div>
+      )}
+      {forma === 'curp' && (
+        <div className="campo">
+          <label htmlFor="curp">CURP</label>
+          <input id="curp" autoComplete="off" autoCapitalize="characters" maxLength={18} value={valores.curp} onChange={(e) => setValores({ ...valores, curp: e.target.value })} required aria-describedby="entrar-ayuda" />
+        </div>
+      )}
+      {forma === 'correo' && (
+        <div className="campo">
+          <label htmlFor="correo">Correo electrónico</label>
+          <input id="correo" type="email" inputMode="email" autoComplete="off" value={valores.correo} onChange={(e) => setValores({ ...valores, correo: e.target.value })} required aria-describedby="entrar-ayuda" />
+        </div>
+      )}
+      <span id="entrar-ayuda" className="campo-ayuda">
+        {forma === 'telefono' ? '10 dígitos, el que registraste. ' : forma === 'curp' ? '18 caracteres. ' : 'El que registraste al crear tu cuenta. '}
+        Te enviaremos un código por mensaje a tu celular.
+      </span>
       {entrar.isError && (
         <p className="texto-error" role="alert">
           No pudimos enviarte el código. Revisa los datos e intenta de nuevo.
         </p>
       )}
-      <button className="boton" disabled={entrar.isPending}>
+      <button className="boton" disabled={entrar.isPending || !listo}>
         {entrar.isPending ? 'Enviando…' : 'Enviar código'}
       </button>
       <Link to="/u/crear-cuenta" className="boton-secundario">
@@ -122,19 +171,19 @@ export function CodigoPage() {
   )
 }
 
-const CURP = /^[A-Z]{4}\d{6}[HMX][A-Z]{5}[A-Z0-9]\d$/
-
 /** U-04 · Crear mi cuenta (autorregistro). */
 export function CrearCuentaPage() {
   const crear = useCrearCuentaUsuaria()
   const navegar = useNavigate()
-  const [f, setF] = useState({ nombre: '', curp: '', telefono: '', aceptaAviso: false })
+  const [f, setF] = useState({ nombre: '', curp: '', telefono: '', correo: '', aceptaAviso: false })
   const curp = f.curp.toUpperCase().replace(/\s/g, '')
   const curpInvalida = curp.length > 0 && !CURP.test(curp)
+  const correo = f.correo.trim().toLowerCase()
+  const correoInvalido = correo.length > 0 && !CORREO.test(correo)
   const enviar = (e: FormEvent) => {
     e.preventDefault()
-    if (curpInvalida) return
-    crear.mutate({ ...f, curp }, { onSuccess: (r) => navegar('/u/codigo', { state: r }) })
+    if (curpInvalida || correoInvalido) return
+    crear.mutate({ ...f, curp, correo: correo || undefined }, { onSuccess: (r) => navegar('/u/codigo', { state: r }) })
   }
   return (
     <form className="pila" onSubmit={enviar}>
@@ -155,6 +204,13 @@ export function CrearCuentaPage() {
         <label htmlFor="telefono">Teléfono celular</label>
         <input id="telefono" type="tel" inputMode="tel" autoComplete="off" value={f.telefono} onChange={(e) => setF({ ...f, telefono: e.target.value.replace(/\D/g, '') })} required minLength={10} maxLength={10} />
         <span className="campo-ayuda">Aquí recibirás tu código para entrar.</span>
+      </div>
+      <div className={`campo ${correoInvalido ? 'campo-error' : ''}`}>
+        <label htmlFor="correo">Correo electrónico (opcional)</label>
+        <input id="correo" type="email" inputMode="email" autoComplete="off" value={f.correo} onChange={(e) => setF({ ...f, correo: e.target.value })} aria-invalid={correoInvalido} aria-describedby="correo-ayuda" />
+        <span id="correo-ayuda" className={correoInvalido ? 'texto-error' : 'campo-ayuda'}>
+          {correoInvalido ? 'Revisa el correo: falta la @ o el dominio.' : 'Si lo agregas, también podrás entrar con él.'}
+        </span>
       </div>
       <label className="opcion">
         <input type="checkbox" checked={f.aceptaAviso} onChange={(e) => setF({ ...f, aceptaAviso: e.target.checked })} required /> Leí y acepto el aviso de privacidad

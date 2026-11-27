@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/routes'
-import { SesionProvider, type Personal, type Rol } from '@/features/identidad/sesion'
+import { SesionProvider, type EmpresaSesion, type Personal, type Rol } from '@/features/identidad/sesion'
 
 // El módulo virtual del service worker no existe en las pruebas.
 vi.mock('virtual:pwa-register/react', () => ({
@@ -15,13 +16,14 @@ vi.mock('virtual:pwa-register/react', () => ({
 }))
 
 const persona = (rol: Rol): Personal => ({ usuario: 'demo', nombre: 'Persona Demo', rol })
+const APROBADA: EmpresaSesion = { id: 'em1', nombre: 'Empresa aliada A', estado: 'aprobada' }
 
-function renderAt(path: string, personal?: Personal, usuaria?: { alias: string }) {
+function renderAt(path: string, personal?: Personal, usuaria?: { alias: string }, empresa?: EmpresaSesion) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
-      <SesionProvider inicial={{ personal, usuaria }}>
+      <SesionProvider inicial={{ personal, usuaria, empresa }}>
         <RouterProvider router={router} />
       </SesionProvider>
     </QueryClientProvider>,
@@ -107,6 +109,10 @@ describe('rutas', () => {
     ['capacitacion', '/capacitacion/visitas', /Planeación de visitas/],
     ['capacitacion', '/capacitacion/bolsa', /Bolsa de trabajo/],
     ['capacitacion', '/capacitacion/bolsa/nueva', /Nueva vacante/],
+    ['capacitacion', '/capacitacion/bolsa/revisar', /Bolsa de trabajo/],
+    ['capacitacion', '/capacitacion/bolsa/empresas', /Bolsa de trabajo/],
+    ['capacitacion', '/capacitacion/bolsa/contrataciones', /Bolsa de trabajo/],
+    ['capacitacion', '/capacitacion/bolsa/vacantes/va4', /Recepcionista/],
     ['administracion', '/', /Hola/],
     ['administracion', '/administracion/reportes', /Reportes/],
     ['administracion', '/administracion/solicitudes', /Solicitudes de acceso/],
@@ -129,6 +135,10 @@ describe('rutas', () => {
     ['/u/foro/cu1', /Finanzas/],
     ['/u/empleo', /Bolsa de trabajo/],
     ['/u/empleo/va1', /Auxiliar administrativa/],
+    ['/u/empleo/postulaciones', /Mis postulaciones/],
+    ['/u/empleo/postulaciones/po5', /Cajera/],
+    ['/u/empleo/cv', /Mi CV/],
+    ['/u/empleo/cv/editar', /Hasta dónde estudiaste/],
     ['/u/pendientes', /Tus pendientes/],
     ['/u/directorio', /Contactos de ayuda/],
     ['/recetas', /Cocina de casa/],
@@ -136,5 +146,87 @@ describe('rutas', () => {
   it.each(PORTAL)('la usuaria abre %s', async (ruta, titulo) => {
     renderAt(ruta, undefined, { alias: 'María' })
     expect(await screen.findByRole('heading', { level: 1, name: titulo })).toBeInTheDocument()
+  })
+
+  const EMPRESA: [string, RegExp][] = [
+    ['/e/vacantes', /Mis vacantes/],
+    ['/e/vacantes/nueva', /Publicar vacante/],
+    ['/e/vacantes/va1', /Auxiliar administrativa/],
+    ['/e/vacantes/va1/editar', /Editar vacante/],
+    ['/e/vacantes/va1/postulantes/po2', /Karla/],
+  ]
+  it.each(EMPRESA)('la empresa abre %s', async (ruta, titulo) => {
+    renderAt(ruta, undefined, undefined, APROBADA)
+    expect(await screen.findByRole('heading', { level: 1, name: titulo })).toBeInTheDocument()
+  })
+
+  it('el portal de empresas pide entrar y ofrece registrarse', async () => {
+    renderAt('/e/vacantes')
+    expect(await screen.findByRole('heading', { name: 'Entrar como empresa' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Registrarla' })).toBeInTheDocument()
+  })
+
+  it('la empresa no ve el teléfono de la postulante antes de que la Secretaría lo entregue', async () => {
+    renderAt('/e/vacantes/va1/postulantes/po2', undefined, undefined, APROBADA)
+    expect(await screen.findByText(/el teléfono no se muestra/i)).toBeInTheDocument()
+    expect(screen.queryByText('6680000012')).not.toBeInTheDocument()
+  })
+
+  it('una empresa sin aprobar no entra a la gestión: va a su solicitud', async () => {
+    renderAt('/e/vacantes', undefined, undefined, { id: 'em4', nombre: 'Clínica del Valle', estado: 'en_revision' })
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mi solicitud' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Publicar/ })).not.toBeInTheDocument()
+  })
+
+  it('una empresa rechazada ve el motivo, corrige y reenvía', async () => {
+    const u = userEvent.setup()
+    renderAt('/e')
+    await u.type(await screen.findByLabelText('Correo de la empresa'), 'contacto@taller-norte.test')
+    await u.click(screen.getByRole('button', { name: 'Enviar código' }))
+    await u.type(await screen.findByLabelText('Código de 6 dígitos'), '123456')
+    await u.click(screen.getByRole('button', { name: 'Entrar' }))
+    expect(await screen.findByText(/No pudimos verificar el RFC/)).toBeInTheDocument()
+
+    await u.click(screen.getByRole('link', { name: 'Corregir y reenviar' }))
+    const rfc = await screen.findByLabelText('RFC')
+    await u.clear(rfc)
+    await u.type(rfc, 'TIN030303EE6')
+    await u.click(screen.getByLabelText(/Acepto el aviso/))
+    await u.click(screen.getByRole('button', { name: 'Reenviar solicitud' }))
+    expect(await screen.findByText(/Reenviaste tu solicitud/)).toBeInTheDocument()
+    expect(screen.getByText(/Estamos revisando tus datos/)).toBeInTheDocument()
+  })
+
+  it('la usuaria entra con su número de celular', async () => {
+    const u = userEvent.setup()
+    renderAt('/u/entrar')
+    const celular = await screen.findByLabelText('Número de celular')
+    expect(screen.getByRole('button', { name: 'Enviar código' })).toBeDisabled()
+    await u.type(celular, '668-123-4567')
+    expect(celular).toHaveValue('6681234567')
+    await u.click(screen.getByRole('button', { name: 'Enviar código' }))
+    expect(await screen.findByText(/termina en •• •••• 67/)).toBeInTheDocument()
+  })
+
+  it('la usuaria también puede entrar con su CURP', async () => {
+    const u = userEvent.setup()
+    renderAt('/u/entrar')
+    await u.click(await screen.findByRole('button', { name: 'CURP' }))
+    await u.type(screen.getByLabelText('CURP'), 'xexx010101mslxxx0')
+    expect(screen.getByRole('button', { name: 'Enviar código' })).toBeDisabled()
+    await u.type(screen.getByLabelText('CURP'), '7')
+    await u.click(screen.getByRole('button', { name: 'Enviar código' }))
+    expect(await screen.findByRole('heading', { name: 'Escribe tu código' })).toBeInTheDocument()
+  })
+
+  it('la usuaria también puede entrar con su correo, no con su nombre', async () => {
+    const u = userEvent.setup()
+    renderAt('/u/entrar')
+    expect(await screen.findByRole('button', { name: 'Correo' })).toBeInTheDocument()
+    expect(screen.queryByText(/nombre completo/i)).not.toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: 'Correo' }))
+    await u.type(screen.getByLabelText('Correo electrónico'), 'maria@ejemplo.test')
+    await u.click(screen.getByRole('button', { name: 'Enviar código' }))
+    expect(await screen.findByRole('heading', { name: 'Escribe tu código' })).toBeInTheDocument()
   })
 })

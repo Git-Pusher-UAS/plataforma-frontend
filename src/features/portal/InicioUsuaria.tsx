@@ -2,6 +2,8 @@ import { Link, useLocation } from 'react-router'
 import { BriefcaseBusiness, CalendarDays, ClipboardList, UserRound } from 'lucide-react'
 import { BotonMantener } from '@/features/ayuda/BotonMantener'
 import { useActivarAyuda } from '@/features/ayuda/AyudaUsuaria'
+import { useMisPostulaciones } from '@/features/bolsa/api'
+import { entrevistaPorConfirmar } from '@/features/bolsa/Usuaria'
 import { useEncuestasPendientes } from '@/features/encuestas/api'
 import { useSesion } from '@/features/identidad/sesion'
 
@@ -12,6 +14,7 @@ export function InicioUsuariaPage() {
   const { activar, enviando, error } = useActivarAyuda()
   const encuestas = useEncuestasPendientes()
   const pendientes = encuestas.data?.length ?? 0
+  const entrevistas = useMisPostulaciones().data?.filter(entrevistaPorConfirmar).length ?? 0
 
   return (
     <section className="pila">
@@ -45,6 +48,7 @@ export function InicioUsuariaPage() {
         </Link>
         <Link to="/u/empleo" className="mosaico-item mosaico-durazno">
           <BriefcaseBusiness size={26} aria-hidden="true" /> Bolsa de trabajo
+          {entrevistas > 0 && <span className="insignia" aria-label={`${entrevistas} por confirmar`}>{entrevistas}</span>}
         </Link>
         <Link to="/u/pendientes" className="mosaico-item mosaico-menta">
           <ClipboardList size={26} aria-hidden="true" /> Mis pendientes

@@ -6,7 +6,24 @@ import { AyudaActivadaPage, CancelarAlertaPage, MantenerPage } from '@/features/
 import { DirectorioPage } from '@/features/ayuda/Directorio'
 import { PaginaNeutra } from '@/features/ayuda/PaginaNeutra'
 import { CanalizacionesPage, CanalizarPage } from '@/features/canalizacion/CanalizacionesPage'
-import { BolsaPage, CalendarioPage, CursosPage, NuevaVacantePage, NuevoCursoPage, PasarListaPage, VisitasPage } from '@/features/capacitacion/pages'
+import { BolsaPage, ContratacionesPage, EmpresasPage, NuevaVacantePage, PorRevisarPage, RevisarVacantePage } from '@/features/bolsa/Capacitacion'
+import {
+  CodigoEmpresaPage,
+  CorregirSolicitudPage,
+  EditarVacanteEmpresaPage,
+  EmpresaLayout,
+  EntrarEmpresaPage,
+  NuevaVacanteEmpresaPage,
+  PostulantePage,
+  RegistroEmpresaPage,
+  RequiereEmpresa,
+  RequiereSolicitante,
+  SolicitudEmpresaPage,
+  VacanteEmpresaPage,
+  VacantesEmpresaPage,
+} from '@/features/bolsa/Empresa'
+import { DetalleVacantePage, EditarCvPage, EmpleoPage, MiCvPage, MiPostulacionPage, MisPostulacionesPage } from '@/features/bolsa/Usuaria'
+import { CalendarioPage, CursosPage, NuevoCursoPage, PasarListaPage, VisitasPage } from '@/features/capacitacion/pages'
 import { BorradoresPage } from '@/features/expedientes/Borradores'
 import {
   CanalizacionesExpedientePage,
@@ -21,7 +38,7 @@ import { ComprobarCurpPage, DatosExpedientePage, NuevoExpedienteLayout, PersonaR
 import { AccesoPage, MiCuentaPage, SesionVencidaPage, VerificacionPage } from '@/features/identidad/AccesoPersonal'
 import { BienvenidaPage, CodigoPage, CrearCuentaPage, EntrarPage } from '@/features/portal/AccesoUsuaria'
 import { PendientesUsuariaPage, PreguntaPage } from '@/features/portal/EncuestasPages'
-import { DetalleCursoPage, DetalleVacantePage, EmpleoPage, ForoPage } from '@/features/portal/ForoEmpleo'
+import { DetalleCursoPage, ForoPage } from '@/features/portal/ForoEmpleo'
 import { InicioUsuariaPage } from '@/features/portal/InicioUsuaria'
 import { PerfilPage } from '@/features/portal/PerfilPage'
 import { PortalLayout, RequiereUsuaria } from '@/features/portal/PortalLayout'
@@ -51,6 +68,10 @@ export const routes: RouteObject[] = [
           { path: 'foro/:cursoId', element: <DetalleCursoPage /> }, // U-11
           { path: 'empleo', element: <EmpleoPage /> }, // U-12
           { path: 'empleo/:vacanteId', element: <DetalleVacantePage /> }, // U-13
+          { path: 'empleo/postulaciones', element: <MisPostulacionesPage /> }, // U-18
+          { path: 'empleo/postulaciones/:postulacionId', element: <MiPostulacionPage /> }, // U-19
+          { path: 'empleo/cv', element: <MiCvPage /> }, // U-20
+          { path: 'empleo/cv/editar', element: <EditarCvPage /> }, // U-21
           { path: 'pendientes', element: <PendientesUsuariaPage /> }, // U-14
           { path: 'pendientes/:encuestaId', element: <PreguntaPage /> }, // U-15
         ],
@@ -58,6 +79,34 @@ export const routes: RouteObject[] = [
     ],
   },
   { path: '/recetas', element: <PaginaNeutra /> }, // U-17
+
+  // ---------- E · Portal de empresas (bolsa de trabajo) ----------
+  {
+    path: '/e',
+    element: <EmpresaLayout />,
+    children: [
+      { index: true, element: <EntrarEmpresaPage /> }, // E-01
+      { path: 'codigo', element: <CodigoEmpresaPage /> }, // E-02
+      { path: 'registro', element: <RegistroEmpresaPage /> }, // E-03
+      {
+        element: <RequiereSolicitante />,
+        children: [
+          { path: 'solicitud', element: <SolicitudEmpresaPage /> }, // E-08
+          { path: 'solicitud/corregir', element: <CorregirSolicitudPage /> }, // E-09
+        ],
+      },
+      {
+        element: <RequiereEmpresa />,
+        children: [
+          { path: 'vacantes', element: <VacantesEmpresaPage /> }, // E-04
+          { path: 'vacantes/nueva', element: <NuevaVacanteEmpresaPage /> }, // E-05
+          { path: 'vacantes/:vacanteId', element: <VacanteEmpresaPage /> }, // E-06
+          { path: 'vacantes/:vacanteId/editar', element: <EditarVacanteEmpresaPage /> }, // E-05b
+          { path: 'vacantes/:vacanteId/postulantes/:postulacionId', element: <PostulantePage /> }, // E-07
+        ],
+      },
+    ],
+  },
 
   // ---------- B · Personal: pantallas sin sesión ----------
   { path: '/acceso', element: <AccesoPage /> }, // P-01
@@ -118,6 +167,10 @@ export const routes: RouteObject[] = [
           { path: 'visitas', element: <VisitasPage /> }, // K-06
           { path: 'bolsa', element: <BolsaPage /> }, // K-07
           { path: 'bolsa/nueva', element: <NuevaVacantePage /> }, // K-08
+          { path: 'bolsa/revisar', element: <PorRevisarPage /> }, // K-09
+          { path: 'bolsa/empresas', element: <EmpresasPage /> }, // K-10
+          { path: 'bolsa/contrataciones', element: <ContratacionesPage /> }, // K-11
+          { path: 'bolsa/vacantes/:vacanteId', element: <RevisarVacantePage /> }, // K-12
         ],
       },
       {

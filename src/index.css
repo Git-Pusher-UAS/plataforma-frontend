@@ -821,3 +821,49 @@ a.indicador:hover, a.mosaico-item:hover { border-color: var(--sai-violeta); }
 .neutra h2 { font: 700 1.3rem/1.2 Georgia, serif; margin: 0 0 .25rem; }
 .neutra-receta { padding: 1rem 0; border-bottom: 1px solid #eee; }
 .neutra-receta button { min-height: 44px; padding: 0 1rem; border: 1px solid #999; background: #f6f6f6; border-radius: 6px; color: #222; }
+
+/* ==========================================================
+   Bolsa de trabajo: usuaria, empresa y Capacitación
+   ========================================================== */
+.contents { display: contents; }
+.tarjeta-enlace { display: grid; color: inherit; text-decoration: none; }
+.tarjeta-enlace:hover { border-color: var(--sai-violeta); }
+.rejilla-vacantes { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.insignia-linea { margin-left: .5rem; vertical-align: middle; font-size: 12px; height: 22px; }
+.chip-sueldo { background: var(--sai-menta); border-color: transparent; color: var(--sai-ciruela); }
+.grupo-opciones { display: grid; gap: .5rem; margin: 0; padding: 0; border: 0; }
+.grupo-opciones legend { font-weight: 700; margin-bottom: .5rem; padding: 0; }
+.avance-postulacion li.hecho:not([aria-current]) { background: var(--sai-lavanda); color: var(--sai-ciruela); }
+
+/* Estados de postulación, vacante y empresa */
+.estado-chip { text-transform: none; }
+.estado-chip-enviada, .estado-chip-v-en_revision, .estado-chip-e-en_revision { background: var(--sai-durazno); border-color: transparent; }
+.estado-chip-en_revision, .estado-chip-v-pausada { background: var(--sai-lila); }
+.estado-chip-entrevista { background: var(--sai-lavanda); border-color: transparent; }
+.estado-chip-aceptada, .estado-chip-v-publicada, .estado-chip-e-aprobada { background: var(--sai-menta); border-color: transparent; }
+.estado-chip-no_seleccionada, .estado-chip-retirada, .estado-chip-v-cerrada { background: #fff; color: var(--sai-suave); }
+.estado-chip-v-cambios, .estado-chip-e-rechazada, .estado-chip-e-suspendida { background: var(--sai-coral); border-color: transparent; }
+
+/* Portal de empresas */
+.empresa { min-height: 100dvh; background: var(--sai-crema); }
+.empresa-barra {
+  position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem;
+  padding: .6rem 1rem; background: var(--sai-crema); border-bottom: 1px solid var(--sai-borde);
+}
+.empresa-barra .marca { font: 700 1.6rem/1 var(--sai-serif); color: var(--sai-ciruela); text-decoration: none; }
+.empresa-sub { font: 700 12px/1 var(--sai-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--sai-suave); margin-left: .25rem; }
+.empresa-menu { display: flex; gap: .25rem; flex: 1 1 auto; }
+.empresa-menu a {
+  display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; padding: 0 .9rem;
+  border-radius: var(--sai-radio-boton); color: var(--sai-ciruela); font-weight: 700; text-decoration: none;
+}
+.empresa-menu a[aria-current="page"] { background: var(--sai-lila); color: var(--sai-violeta); }
+.empresa-nombre { font-weight: 700; color: var(--sai-suave); }
+.empresa-pagina { max-width: 64rem; margin: 0 auto; padding: 1rem 1rem 3rem; }
+@media (min-width: 768px) { .empresa-pagina { padding: 1.5rem 2rem 3rem; } }
+@media (max-width: 640px) {
+  .empresa-menu { order: 3; flex-basis: 100%; }
+  .empresa-nombre { display: none; }
+  .empresa-barra .boton-chico { margin-left: auto; }
+}
+.enlace-boton.enlace-discreto { color: var(--sai-suave); font-weight: 600; justify-self: center; display: inline-flex; align-items: center; gap: .3rem; }

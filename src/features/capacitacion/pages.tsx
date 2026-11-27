@@ -2,21 +2,19 @@ import { lazy, Suspense, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { BriefcaseBusiness, CalendarDays, ChevronLeft, ChevronRight, MapPinned, Plus } from 'lucide-react'
 import {
-  OPCIONES_VACANTE,
   TIPOS_EVENTO,
   hora12,
   useAsistencia,
   useCrearCurso,
-  useCrearVacante,
   useCrearVisita,
   useCurso,
   useCursos,
   useGuardarAsistencia,
-  useVacantes,
   useVisitas,
   type Asistente,
   type TipoEvento,
 } from '@/features/capacitacion/api'
+import { useVacantesAdmin } from '@/features/bolsa/api'
 import { EtiquetaEvento, TarjetaEvento } from '@/features/portal/ForoEmpleo'
 import { useSesion } from '@/features/identidad/sesion'
 import { Cargando, Consulta } from '@/shared/ui/Estados'
@@ -30,7 +28,7 @@ const MapaCalorAhome = lazy(() => import('@/features/tablero/MapaCalorAhome').th
 export function InicioCapacitacionPage() {
   const { personal } = useSesion()
   const cursos = useCursos()
-  const vacantes = useVacantes()
+  const vacantes = useVacantesAdmin('publicada')
   const visitas = useVisitas()
   const proximos = (cursos.data ?? []).slice(0, 3)
   return (
@@ -367,115 +365,3 @@ export function VisitasPage() {
   )
 }
 
-/** K-07 · Bolsa de trabajo (Capacitación la mantiene al día). */
-export function BolsaPage() {
-  const q = useVacantes()
-  return (
-    <section className="pila">
-      <Encabezado
-        antetitulo="Capacitación"
-        titulo="Bolsa de trabajo"
-        acciones={
-          <Link to="/capacitacion/bolsa/nueva" className="boton">
-            <Plus size={18} aria-hidden="true" /> Nueva vacante
-          </Link>
-        }
-      >
-        Las empresas no entran a SAI: la Secretaría publica y hace de puente en las postulaciones.
-      </Encabezado>
-      <Consulta q={q} vacio="No hay vacantes publicadas.">
-        {(lista) => (
-          <div className="tabla-contenedor">
-            <table className="tabla">
-              <thead>
-                <tr>
-                  <th scope="col">Puesto</th>
-                  <th scope="col">Empresa</th>
-                  <th scope="col">Sector</th>
-                  <th scope="col">Horario</th>
-                  <th scope="col">Postulaciones</th>
-                  <th scope="col">Actualizada</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lista.map((v) => (
-                  <tr key={v.id}>
-                    <td className="enlace-fuerte">{v.puesto}</td>
-                    <td>{v.empresa}</td>
-                    <td>{v.sector}</td>
-                    <td>{v.horario}</td>
-                    <td className="cifra">{v.postulaciones ?? 0}</td>
-                    <td>{fecha(v.actualizada)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Consulta>
-    </section>
-  )
-}
-
-/** K-08 · Nueva vacante */
-export function NuevaVacantePage() {
-  const crear = useCrearVacante()
-  const navegar = useNavigate()
-  const [f, setF] = useState({ puesto: '', empresa: '', sector: OPCIONES_VACANTE.sector[0]!, horario: OPCIONES_VACANTE.horario[0]!, tipoEmpleo: OPCIONES_VACANTE.tipoEmpleo[0]!, ubicacion: OPCIONES_VACANTE.ubicacion[0]!, descripcion: '', requisitos: '' })
-  const sel = (k: keyof typeof OPCIONES_VACANTE, texto: string) => (
-    <div className="campo">
-      <label htmlFor={`v-${k}`}>{texto}</label>
-      <select id={`v-${k}`} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })}>
-        {OPCIONES_VACANTE[k].map((o) => (
-          <option key={o}>{o}</option>
-        ))}
-      </select>
-    </div>
-  )
-  return (
-    <section className="pila angosta">
-      <Encabezado antetitulo="Capacitación" titulo="Nueva vacante" />
-      <form
-        className="tarjeta pila"
-        onSubmit={(e) => {
-          e.preventDefault()
-          crear.mutate({ ...f, requisitos: f.requisitos.split('\n').map((r) => r.trim()).filter(Boolean) }, { onSuccess: () => navegar('/capacitacion/bolsa') })
-        }}
-      >
-        <div className="rejilla-2">
-          <div className="campo">
-            <label htmlFor="v-puesto">Puesto</label>
-            <input id="v-puesto" value={f.puesto} onChange={(e) => setF({ ...f, puesto: e.target.value })} required />
-          </div>
-          <div className="campo">
-            <label htmlFor="v-empresa">Empresa aliada</label>
-            <input id="v-empresa" value={f.empresa} onChange={(e) => setF({ ...f, empresa: e.target.value })} required />
-          </div>
-        </div>
-        <div className="rejilla-2">
-          {sel('sector', 'Sector')}
-          {sel('horario', 'Horario')}
-          {sel('tipoEmpleo', 'Tipo de empleo')}
-          {sel('ubicacion', 'Ubicación')}
-        </div>
-        <div className="campo">
-          <label htmlFor="v-desc">Descripción</label>
-          <textarea id="v-desc" className="area" rows={3} value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} required />
-        </div>
-        <div className="campo">
-          <label htmlFor="v-req">Requisitos</label>
-          <textarea id="v-req" className="area" rows={3} value={f.requisitos} onChange={(e) => setF({ ...f, requisitos: e.target.value })} />
-          <span className="campo-ayuda">Uno por renglón.</span>
-        </div>
-        <div className="fila-botones">
-          <Link to="/capacitacion/bolsa" className="boton-secundario">
-            Cancelar
-          </Link>
-          <button className="boton" disabled={crear.isPending}>
-            Publicar vacante
-          </button>
-        </div>
-      </form>
-    </section>
-  )
-}
