@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -6,9 +7,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 // En desarrollo, las rutas /api se dirigen al proxy del backend (Hackathon-app).
 // Local: http://localhost:3000 (Docker Compose: http://localhost:3001).
 // Para trabajar contra el servidor simulado: VITE_API_PROXY_TARGET=http://localhost:4010
-const apiTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000'
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const apiTarget = process.env.VITE_API_PROXY_TARGET ?? env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000'
 
-export default defineConfig({
+  return {
   plugins: [
     react(),
     VitePWA({
@@ -60,4 +63,5 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     css: false,
   },
+  }
 })
