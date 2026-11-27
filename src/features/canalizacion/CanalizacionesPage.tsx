@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { areaDeDepartamento, useCatalogos } from '@/api/catalogos'
 import {
   INSTITUCIONES_EXTERNAS,
   textoArea,
@@ -14,6 +15,7 @@ import {
 import { areaDeRol, type Area } from '@/features/expedientes/api'
 import { DialogoMotivo, useExpedienteCtx } from '@/features/expedientes/Expediente'
 import { useSesion } from '@/features/identidad/sesion'
+import { esModoSimulado } from '@/shared/lib/servicio'
 import { Consulta } from '@/shared/ui/Estados'
 import { Encabezado } from '@/shared/ui/Encabezado'
 import { Segmentos } from '@/shared/ui/Pestanas'
@@ -118,24 +120,38 @@ export function CanalizacionesPage() {
   )
 }
 
-const AREAS: Area[] = ['trabajo-social', 'psicologia', 'juridico']
-
 /** P-30b · Canalizar: interna (a otra área) o externa (institución, seguimiento manual). */
 export function CanalizarPage() {
   const { exp, area } = useExpedienteCtx()
+  const catalogos = useCatalogos()
   const canalizar = useCanalizar(exp.id, exp.alias, area)
   const navegar = useNavigate()
   const [tipo, setTipo] = useState<'interna' | 'externa'>('interna')
-  const opciones = tipo === 'interna' ? AREAS.filter((a) => a !== area).map(textoArea) : INSTITUCIONES_EXTERNAS
-  const [destino, setDestino] = useState('')
+  const [destinoId, setDestinoId] = useState('')
   const [resumen, setResumen] = useState('')
+
+  const opcionesInternas = (catalogos.data?.departamentos ?? [])
+    .filter((d) => {
+      const depArea = areaDeDepartamento(d)
+      return depArea !== null && depArea !== area
+    })
+    .map((d) => ({ id: d.id, nombre: d.nombre }))
+
+  const simulado = esModoSimulado()
+  const opcionesExternas = simulado ? INSTITUCIONES_EXTERNAS.map((nombre) => ({ id: nombre, nombre })) : []
+  const opciones = tipo === 'interna' ? opcionesInternas : opcionesExternas
+  const elegida = opciones.find((o) => o.id === destinoId)
 
   return (
     <form
       className="tarjeta pila angosta"
       onSubmit={(e) => {
         e.preventDefault()
-        canalizar.mutate({ tipo, destino, resumen }, { onSuccess: () => navegar(`/expedientes/${exp.id}/canalizaciones`) })
+        if (!elegida) return
+        canalizar.mutate(
+          { tipo, destino: elegida.nombre, destinoId: elegida.id, resumen },
+          { onSuccess: () => navegar(`/expedientes/${exp.id}/canalizaciones`) },
+        )
       }}
     >
       <h2 className="subtitulo">Canalizar</h2>
@@ -148,16 +164,22 @@ export function CanalizarPage() {
         valor={tipo}
         onCambio={(t) => {
           setTipo(t)
-          setDestino('')
+          setDestinoId('')
         }}
       />
       <fieldset className="grupo">
         <legend>{tipo === 'interna' ? 'Área destino' : 'Institución'}</legend>
         {opciones.map((o) => (
-          <label key={o} className="opcion">
-            <input type="radio" name="destino" checked={destino === o} onChange={() => setDestino(o)} required /> {o}
+          <label key={o.id} className="opcion">
+            <input type="radio" name="destino" checked={destinoId === o.id} onChange={() => setDestinoId(o.id)} required /> {o.nombre}
           </label>
         ))}
+        {tipo === 'externa' && !simulado && (
+          // TODO(backend): enable external institution selection once GET /catalogs returns instituciones UUIDs
+          <p className="estado estado-aviso texto-chico">
+            El catálogo de instituciones externas aún no está disponible en el servidor.
+          </p>
+        )}
       </fieldset>
       {tipo === 'externa' && <p className="estado estado-aviso texto-chico">La institución no usa SAI: el seguimiento se registra a mano en este expediente.</p>}
       <div className="campo">
@@ -174,7 +196,7 @@ export function CanalizarPage() {
         <Link to={`/expedientes/${exp.id}`} className="boton-secundario">
           Cancelar
         </Link>
-        <button className="boton" disabled={canalizar.isPending}>
+        <button className="boton" disabled={canalizar.isPending || !elegida}>
           Enviar canalización
         </button>
       </div>

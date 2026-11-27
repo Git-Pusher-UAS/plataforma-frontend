@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { consulta, pedir } from '@/shared/lib/servicio'
+import { consulta, formatIfMatch, pedir } from '@/shared/lib/servicio'
 import type { Area } from '@/features/expedientes/api'
 
 export type EstadoCanalizacion = 'pendiente' | 'aceptada' | 'rechazada' | 'completada' | 'cancelada'
@@ -22,6 +22,34 @@ export const INSTITUCIONES_EXTERNAS = ['Fiscalía Especializada', 'Centro de Jus
 
 const AREAS_TEXTO: Record<Area, string> = { 'trabajo-social': 'Trabajo social', psicologia: 'Psicología', juridico: 'Jurídico' }
 export const textoArea = (a: Area) => AREAS_TEXTO[a]
+
+type RawReferralView = {
+  id: string
+  expedienteId: string
+  alias: string
+  tipo: 'interna' | 'externa'
+  origen: string | { departamentoId?: string; nombre: string }
+  destino: string | { departamentoId?: string | null; institucionId?: string | null; nombre: string }
+  resumen: string
+  estado: EstadoCanalizacion
+  fecha: string
+  versionTag: string
+}
+
+function adaptarCanalizacion(r: RawReferralView): Canalizacion {
+  return {
+    id: r.id,
+    expedienteId: r.expedienteId,
+    alias: r.alias,
+    tipo: r.tipo,
+    origen: typeof r.origen === 'string' ? r.origen : r.origen.nombre,
+    destino: typeof r.destino === 'string' ? r.destino : r.destino.nombre,
+    resumen: r.resumen,
+    estado: r.estado,
+    fecha: r.fecha.slice(0, 10),
+    versionTag: r.versionTag,
+  }
+}
 
 // ---------- Datos simulados ----------
 type Interna = Canalizacion & { para: Area[]; de: Area[] }
@@ -47,6 +75,12 @@ export function useCanalizaciones(area: Area, direccion: Direccion, estado?: Est
       pedir<Canalizacion[]>({
         metodo: 'GET',
         ruta: `/referrals${consulta({ direction: direccion, status: estado })}`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw)
+            ? (raw as RawReferralView[])
+            : ((raw as { items?: RawReferralView[] } | null)?.items ?? [])
+          return items.map(adaptarCanalizacion)
+        },
         simulado: () =>
           lista
             .filter((c) => (direccion === 'incoming' ? c.para.includes(area) : c.de.includes(area)))
@@ -64,6 +98,12 @@ export function useCanalizacionesDeExpediente(expedienteId: string) {
       pedir<Canalizacion[]>({
         metodo: 'GET',
         ruta: `/referrals${consulta({ recordId: expedienteId })}`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw)
+            ? (raw as RawReferralView[])
+            : ((raw as { items?: RawReferralView[] } | null)?.items ?? [])
+          return items.map(adaptarCanalizacion)
+        },
         simulado: () => lista.filter((c) => c.expedienteId === expedienteId).map(publica),
       }),
   })
@@ -79,7 +119,8 @@ export function useTransicion() {
       pedir<void>({
         metodo: 'POST',
         ruta: `/referrals/${c.id}/transitions`,
-        cuerpo: { action: c.accion, motivo: c.motivo },
+        headers: { 'If-Match': formatIfMatch(c.versionTag) },
+        cuerpo: { action: c.accion, ...(c.motivo ? { motivo: c.motivo } : {}) },
         simulado: () => {
           const x = lista.find((r) => r.id === c.id)
           if (x) {
@@ -96,15 +137,21 @@ export function useTransicion() {
 export function useCanalizar(expedienteId: string, alias: string, area: Area) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (c: { tipo: 'interna' | 'externa'; destino: string; resumen: string }) =>
+    mutationFn: (c: { tipo: 'interna' | 'externa'; destino: string; destinoId?: string; resumen: string }) =>
       pedir<{ id: string }>({
         metodo: 'POST',
         ruta: `/case-files/${expedienteId}/referrals`,
-        cuerpo: { ...c, operationId: crypto.randomUUID() },
+        headers: { 'X-Operation-Id': crypto.randomUUID() },
+        cuerpo: {
+          tipo: c.tipo,
+          ...(c.tipo === 'interna' ? { destinoId: c.destinoId } : { institucionId: c.destinoId }),
+          resumen: c.resumen,
+        },
+        adaptar: (raw) => ({ id: (raw as { id: string }).id }),
         simulado: () => {
           const id = `ca${lista.length + 1}`
           const destinoArea = (Object.entries(AREAS_TEXTO).find(([, t]) => t === c.destino)?.[0] ?? null) as Area | null
-          lista.unshift({ id, expedienteId, alias, ...c, origen: textoArea(area), estado: 'pendiente', fecha: new Date().toISOString().slice(0, 10), versionTag: 'r1', para: destinoArea ? [destinoArea] : [], de: [area] })
+          lista.unshift({ id, expedienteId, alias, tipo: c.tipo, destino: c.destino, resumen: c.resumen, origen: textoArea(area), estado: 'pendiente', fecha: new Date().toISOString().slice(0, 10), versionTag: 'r1', para: destinoArea ? [destinoArea] : [], de: [area] })
           return { id }
         },
       }),

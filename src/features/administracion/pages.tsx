@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { ChartColumn, Inbox, Map, MessageSquareHeart, ScrollText, Users } from 'lucide-react'
+import { departamentoDeRol, useCatalogos } from '@/api/catalogos'
 import { useCrearCuenta, useCuentas, useEditarCuenta, useResolverSolicitud, useSolicitudes, type Cuenta, type Solicitud } from '@/features/administracion/api'
 import { ACCIONES, useBitacora, type FiltrosBitacora } from '@/features/bitacora/api'
 import { useResultadosEncuestas } from '@/features/encuestas/api'
@@ -195,7 +196,13 @@ export function SolicitudesPage() {
           className="pila"
           onSubmit={(e) => {
             e.preventDefault()
-            if (asignar) resolver.mutate({ solicitud: asignar, decision: 'asignar', staffId: staff, motivo }, { onSuccess: () => setAsignar(null) })
+            if (asignar) {
+              const elegido = personalArea.data?.find((c) => c.id === staff)
+              resolver.mutate(
+                { solicitud: asignar, decision: 'asignar', staffId: staff, departamentoId: elegido?.departamentoId, motivo },
+                { onSuccess: () => setAsignar(null) },
+              )
+            }
           }}
         >
           <div className="campo">
@@ -311,6 +318,7 @@ export function PersonalPage() {
   const { personal } = useSesion()
   const [texto, setTexto] = useState('')
   const q = useCuentas(texto)
+  const catalogos = useCatalogos()
   const crear = useCrearCuenta()
   const editar = useEditarCuenta()
   const [nueva, setNueva] = useState(false)
@@ -406,7 +414,8 @@ export function PersonalPage() {
             className="pila"
             onSubmit={(e) => {
               e.preventDefault()
-              crear.mutate(f)
+              const departamentoId = departamentoDeRol(catalogos.data, f.rol)?.id
+              crear.mutate({ ...f, departamentoId })
             }}
           >
             <div className="campo">
@@ -447,7 +456,14 @@ export function PersonalPage() {
             type="button"
             className="boton"
             disabled={editar.isPending}
-            onClick={() => cambio && editar.mutate({ id: cambio.c.id, cambios: cambio.cambios }, { onSuccess: () => setCambio(null) })}
+            onClick={() => {
+              if (!cambio) return
+              const departamentoId = cambio.cambios.rol ? departamentoDeRol(catalogos.data, cambio.cambios.rol)?.id : undefined
+              editar.mutate(
+                { id: cambio.c.id, versionTag: cambio.c.versionTag, departamentoId, cambios: cambio.cambios },
+                { onSuccess: () => setCambio(null) },
+              )
+            }}
           >
             Confirmar
           </button>
@@ -472,7 +488,7 @@ export function OpinionPage() {
               <div key={r.encuestaId} className="tarjeta pila-corta">
                 <h2 className="subtitulo">{r.titulo}</h2>
                 <p className="texto-suave">
-                  <span className="cifra">{r.respuestas}</span> respuestas
+                  <span className="cifra">{numero(r.respuestas)}</span> respuestas
                 </p>
                 {r.preguntas.map((p) => (
                   <div key={p.id} className="pila-corta">

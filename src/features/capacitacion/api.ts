@@ -111,8 +111,15 @@ export function useAsistencia(id: string) {
 export function useGuardarAsistencia(id: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (lista: Asistente[]) =>
-      pedir<void>({ metodo: 'PUT', ruta: `/courses/${id}/attendance`, cuerpo: lista.map(({ id, presente }) => ({ enrollmentId: id, presente })), simulado: () => void (asistencia[id] = lista) }),
+    mutationFn: async (lista: Asistente[]) => {
+      if (lista.length === 0) return
+      return pedir<void>({
+        metodo: 'PUT',
+        ruta: `/courses/${id}/attendance`,
+        cuerpo: lista.map(({ id: enrollmentId, presente }) => ({ enrollmentId, presente })),
+        simulado: () => void (asistencia[id] = lista),
+      })
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['asistencia', id] }),
   })
 }

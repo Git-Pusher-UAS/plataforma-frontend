@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useMapaCalor } from '@/features/tablero/api'
 import { MapaCalorAhome, type Vista } from '@/features/tablero/MapaCalorAhome'
 
 const VISTAS: { valor: Vista; texto: string }[] = [
@@ -18,6 +19,9 @@ const LEYENDA = [
 
 export function TableroPage() {
   const [vista, setVista] = useState<Vista>('municipio')
+  const mapa = useMapaCalor()
+  const niveles = mapa.data ?? {}
+  const hayDatos = Object.keys(niveles).length > 0
   return (
     <section>
       <p className="etiqueta-peque">Administración</p>
@@ -39,12 +43,13 @@ export function TableroPage() {
         </div>
 
         <div className="mapa-lienzo">
-          {/* shortcut: aún sin datos; cuando exista GET /analytics/heatmap en el contrato, pasar `niveles` con useQuery. */}
-          <MapaCalorAhome vista={vista} />
+          <MapaCalorAhome vista={vista} niveles={niveles} />
         </div>
 
         <div className="mapa-lateral">
-          <p className="estado estado-aviso">Todavía no hay datos para mostrar. El mapa se coloreará cuando el servicio de indicadores esté disponible.</p>
+          {!hayDatos && (
+            <p className="estado estado-aviso">Todavía no hay datos para mostrar. El mapa se coloreará cuando el servicio de indicadores esté disponible.</p>
+          )}
 
           <ul className="mapa-leyenda" aria-label="Leyenda">
             {LEYENDA.map(({ clase, texto }) => (

@@ -6,6 +6,18 @@ export type FiltrosBitacora = { actor?: string; expediente?: string; accion?: st
 
 export const ACCIONES = ['Consulta', 'Modificación', 'Dato revelado', 'Nota agregada', 'Canalización', 'Inicio de sesión', 'Consulta de bitácora']
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+type RawAuditEntry = {
+  id: string
+  fecha: string
+  actor?: { id?: string; nombreLaboral?: string } | string | null
+  rol?: string | null
+  accion: string
+  expediente?: string | null
+  detalle?: string | null
+}
+
 const eventos: EventoBitacora[] = [
   { id: 'b1', fecha: '2026-11-25T16:42', actor: 'acastro', rol: 'Psicología', accion: 'Nota agregada', expediente: 'EXP-0412', detalle: 'Nota del área de Psicología' },
   { id: 'b2', fecha: '2026-11-25T16:30', actor: 'lmendez', rol: 'Trabajo social', accion: 'Dato revelado', expediente: 'EXP-0418', detalle: 'Teléfono · motivo: contactar para cita' },
@@ -18,12 +30,34 @@ const eventos: EventoBitacora[] = [
 
 /** GET /audit-logs?actorId=&recordId=&action=&from=&to= (la consulta también queda registrada). */
 export function useBitacora(f: FiltrosBitacora) {
+  const actorParam = f.actor && UUID_RE.test(f.actor.trim()) ? f.actor.trim() : undefined
+  const recordParam = f.expediente && UUID_RE.test(f.expediente.trim()) ? f.expediente.trim() : undefined
   return useQuery({
     queryKey: ['bitacora', f],
     queryFn: () =>
       pedir<EventoBitacora[]>({
         metodo: 'GET',
-        ruta: `/audit-logs${consulta({ actorId: f.actor, recordId: f.expediente, action: f.accion, from: f.desde, to: f.hasta })}`,
+        ruta: `/audit-logs${consulta({ actorId: actorParam, recordId: recordParam, action: f.accion, from: f.desde, to: f.hasta })}`,
+        adaptar: (raw) => {
+          const items = Array.isArray(raw)
+            ? (raw as RawAuditEntry[])
+            : ((raw as { items?: RawAuditEntry[] } | null)?.items ?? [])
+          const mapped: EventoBitacora[] = items.map((e) => ({
+            id: e.id,
+            fecha: e.fecha,
+            actor: typeof e.actor === 'string' ? e.actor : (e.actor?.nombreLaboral ?? 'Sistema'),
+            rol: e.rol ?? '',
+            accion: e.accion,
+            expediente: e.expediente ?? undefined,
+            detalle: e.detalle ?? '',
+          }))
+          // TODO(backend): remove client-side text filter once GET /audit-logs supports non-UUID actor/record search
+          return mapped.filter(
+            (e) =>
+              (!f.actor || actorParam || e.actor.toLowerCase().includes(f.actor.toLowerCase())) &&
+              (!f.expediente || recordParam || e.expediente?.toUpperCase().includes(f.expediente.toUpperCase())),
+          )
+        },
         simulado: () =>
           eventos.filter(
             (e) =>

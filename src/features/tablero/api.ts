@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+import type { NivelSector } from '@/features/tablero/MapaCalorAhome'
+import { fecha } from '@/shared/lib/formato'
 import { consulta, pedir } from '@/shared/lib/servicio'
 
 export type Periodo = '30d' | '6m' | '12m'
@@ -13,9 +15,16 @@ export type Resumen = {
   porArea: Serie[]
 }
 
+type RawHeatmapCell = {
+  sectorId: string
+  nivel?: number
+  count: number | null
+  suppressed: boolean
+}
+
 const MESES = ['Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov']
 
-/** GET /analytics/summary?from=&to=&type= — cifras agregadas y anonimizadas; null = suprimido (menos de 5 casos). */
+/** GET /analytics/summary?period= — cifras agregadas y anonimizadas; null = suprimido (menos de 5 casos). */
 export function useResumen(periodo: Periodo) {
   return useQuery({
     queryKey: ['analitica', 'resumen', periodo],
@@ -23,6 +32,13 @@ export function useResumen(periodo: Periodo) {
       pedir<Resumen>({
         metodo: 'GET',
         ruta: `/analytics/summary${consulta({ period: periodo })}`,
+        adaptar: (raw) => {
+          const r = raw as Resumen
+          return {
+            ...r,
+            corte: r.corte ? fecha(r.corte) : '',
+          }
+        },
         simulado: () => {
           const f = periodo === '30d' ? 0.12 : periodo === '6m' ? 0.55 : 1
           const n = (x: number) => Math.round(x * f)
@@ -50,6 +66,32 @@ export function useResumen(periodo: Periodo) {
             ],
           }
         },
+      }),
+  })
+}
+
+/** GET /analytics/heatmap — niveles agregados por sector/AGEB con supresión k < 5. */
+export function useMapaCalor() {
+  return useQuery({
+    queryKey: ['analitica', 'heatmap'],
+    queryFn: () =>
+      pedir<Record<string, NivelSector>>({
+        metodo: 'GET',
+        ruta: '/analytics/heatmap',
+        adaptar: (raw) => {
+          const cells = Array.isArray(raw) ? (raw as RawHeatmapCell[]) : []
+          const mapa: Record<string, NivelSector> = {}
+          for (const c of cells) {
+            if (c.suppressed) {
+              mapa[c.sectorId] = 'suprimido'
+            } else {
+              const lvl = Math.min(5, Math.max(1, c.nivel ?? 1)) as 1 | 2 | 3 | 4 | 5
+              mapa[c.sectorId] = lvl
+            }
+          }
+          return mapa
+        },
+        simulado: () => ({}),
       }),
   })
 }

@@ -7,7 +7,7 @@ export type Encuesta = { id: string; titulo: string; minutos: number; preguntas:
 export type Resultado = {
   encuestaId: string
   titulo: string
-  respuestas: number
+  respuestas: number | null
   preguntas: { id: string; texto: string; tipo: Pregunta['tipo']; promedio?: number; conteo?: { opcion: string; total: number | null }[] }[]
 }
 
