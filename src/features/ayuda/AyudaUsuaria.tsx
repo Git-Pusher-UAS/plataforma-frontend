@@ -61,6 +61,9 @@ export function MantenerPage() {
       )}
       {error && <ListaContactos soloPrioritarios />}
       {NOTA_911}
+      <Link to="/u/inicio" className="enlace-discreto">
+        Volver al inicio
+      </Link>
     </section>
   )
 }
