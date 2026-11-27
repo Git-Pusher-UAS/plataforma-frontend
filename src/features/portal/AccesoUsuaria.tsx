@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
+import { ApiError } from '@/api/client'
 import { useCrearCuentaUsuaria, useEntrarUsuaria, useVerificarUsuaria, type EntradaUsuaria } from '@/features/identidad/api'
 import { useSesion } from '@/features/identidad/sesion'
 import { Segmentos } from '@/shared/ui/Pestanas'
@@ -220,7 +221,11 @@ export function CrearCuentaPage() {
       </label>
       {crear.isError && (
         <p className="texto-error" role="alert">
-          No pudimos crear tu cuenta. Intenta de nuevo.
+          {crear.error instanceof ApiError && crear.error.status === 409
+            ? 'Ya existe una cuenta registrada con esta CURP. Intenta entrar con tu cuenta.'
+            : crear.error instanceof ApiError && crear.error.status === 422
+              ? 'Revisa tus datos (nombre, CURP de 18 caracteres y teléfono de 10 dígitos) e intenta de nuevo.'
+              : 'No pudimos crear tu cuenta. Intenta de nuevo.'}
         </p>
       )}
       <button className="boton" disabled={crear.isPending}>
