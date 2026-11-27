@@ -31,7 +31,14 @@ function renderAt(path: string, personal?: Personal, usuaria?: { alias: string }
 }
 
 describe('rutas', () => {
-  it('la raíz / sin sesión muestra la bienvenida con ayuda y salida rápida', async () => {
+  it('la raíz / sin sesión en escritorio lleva al acceso del personal', async () => {
+    renderAt('/')
+    expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Usuario')).toBeInTheDocument()
+  })
+
+  it('la raíz / sin sesión en celular muestra la bienvenida con ayuda y salida rápida', async () => {
+    const ua = vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148')
     renderAt('/')
     expect(await screen.findByRole('heading', { name: /acompañarte/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument()
@@ -40,6 +47,7 @@ describe('rutas', () => {
     expect(screen.getByRole('link', { name: 'Soy personal de la Secretaría' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Soy una empresa aliada' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
+    ua.mockRestore()
   })
 
   it('sin sesión, el panel lleva a la pantalla de acceso con la salida rápida visible', async () => {

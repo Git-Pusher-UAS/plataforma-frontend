@@ -4,6 +4,7 @@ import { BriefcaseBusiness, CalendarDays, HandHeart, House, LogOut, UserRound } 
 import { quickExit } from '@/features/ayuda/quickExit'
 import { useQuickExitShortcut } from '@/features/ayuda/useQuickExitShortcut'
 import { useSesion } from '@/features/identidad/sesion'
+import { Logo } from '@/shared/ui/Logo'
 
 /** Destino de «Salir» en el portal: U-17, página neutra. replace() evita volver con «atrás». */
 export const SALIDA_PORTAL = '/recetas'
@@ -27,8 +28,8 @@ export function PortalLayout({ children }: { children?: ReactNode }) {
   return (
     <div className="portal">
       <header className="portal-barra">
-        <Link to={usuaria ? '/u/inicio' : '/'} className="marca" aria-label="Inicio">
-          SAI
+        <Link to={usuaria ? '/u/inicio' : '/u'} className="marca" aria-label="Inicio">
+          <Logo /> SAI
         </Link>
         <button type="button" className="boton-salir" onClick={salir} aria-label="Salida rápida">
           <LogOut size={18} aria-hidden="true" /> Salir

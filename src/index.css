@@ -288,7 +288,7 @@ button {
 @media (max-width: 767px) {
   .barra .btn-menu-escritorio,
   .menu-resize { display: none; }
-  .barra-marca { display: block; }
+  .barra-marca { display: inline-flex; align-items: center; gap: .5rem; }
 
   .menu-lateral {
     position: fixed;
@@ -994,3 +994,15 @@ a.indicador:hover, a.mosaico-item:hover { border-color: var(--sai-violeta); }
 @media (min-width: 1024px) {
   .admin-pagina .admin-mosaico { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Logo de Ahome · SAI a la izquierda de la marca «SAI» */
+.menu-marca, .menu-marca-oscura, .marca { display: inline-flex; align-items: center; gap: .5rem; }
+.logo-sai { display: block; height: 32px; width: auto; flex: none; }
+/* En el menú oscuro el logo va sobre una pastilla clara para que se lea. */
+.logo-sai-claro { box-sizing: content-box; padding: 3px 6px; background: var(--sai-crema); border-radius: 8px; }
+.empresa-barra .logo-sai { height: 28px; }
+
+/* «Registrar a una persona»: el atajo responde al pasar el cursor y al enfocarlo */
+a.atajo { border: 1px solid transparent; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+a.atajo:hover, a.atajo:focus-visible { background: #fff; border-color: var(--sai-violeta); box-shadow: 0 4px 14px rgba(106, 75, 168, .18); transform: translateY(-1px); }
+a.atajo:hover strong, a.atajo:focus-visible strong { color: var(--sai-violeta); }

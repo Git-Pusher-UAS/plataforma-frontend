@@ -6,7 +6,7 @@ import { MENU_POR_ROL, barraInferior } from '@/app/nav'
 import { QuickExitButton } from '@/features/ayuda/QuickExitButton'
 import { NecesitoAyudaPersonal } from '@/features/ayuda/NecesitoAyudaPersonal'
 import { ROLES, useSesion } from '@/features/identidad/sesion'
-import { UpdatePrompt } from '@/pwa/UpdatePrompt'
+import { Logo } from '@/shared/ui/Logo'
 
 // Estructura y comportamiento del menú tomados del diseño móvil de la rama modificaciones_css:
 // cajón lateral en celular con 3 accesos fijos abajo; en escritorio, menú que se oculta y cambia de ancho.
@@ -88,7 +88,9 @@ export function Layout({ children }: { children?: ReactNode }) {
     <div className={clases} style={{ '--menu-ancho': `${ancho}px` } as CSSProperties}>
       <nav id="menu-principal" className="menu-lateral" aria-label="Principal">
         <div className="menu-cabecera">
-          <span className="menu-marca">SAI</span>
+          <span className="menu-marca">
+            <Logo className="logo-sai logo-sai-claro" /> SAI
+          </span>
           <button
             type="button"
             className="menu-cerrar"
@@ -144,7 +146,9 @@ export function Layout({ children }: { children?: ReactNode }) {
               Menú
             </button>
           )}
-          <span className="barra-marca">SAI</span>
+          <span className="barra-marca">
+            <Logo /> SAI
+          </span>
 
           <span className="barra-persona">
             <span className="barra-nombre">{personal.nombre}</span>
@@ -170,8 +174,6 @@ export function Layout({ children }: { children?: ReactNode }) {
           </NavLink>
         ))}
       </nav>
-
-      <UpdatePrompt />
     </div>
   )
 }

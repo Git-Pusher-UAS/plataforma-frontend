@@ -7,13 +7,16 @@ import { ROLES, textoRol, useSesion, type Rol } from '@/features/identidad/sesio
 import { USAR_SIMULADOS } from '@/shared/lib/servicio'
 import { Consulta } from '@/shared/ui/Estados'
 import { Encabezado } from '@/shared/ui/Encabezado'
+import { Logo } from '@/shared/ui/Logo'
 
 /** Marco de las pantallas sin sesión del personal: solo Salir y el directorio. */
 function MarcoAcceso({ children }: { children: ReactNode }) {
   return (
     <div className="acceso">
       <header className="barra barra-acceso">
-        <span className="menu-marca-oscura">SAI</span>
+        <span className="menu-marca-oscura">
+          <Logo /> SAI
+        </span>
         <QuickExitButton />
       </header>
       <div className="acceso-contenido">

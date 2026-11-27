@@ -29,6 +29,7 @@ import { fechaLarga, hora12 } from '@/features/capacitacion/api'
 import { useSesion } from '@/features/identidad/sesion'
 import { Dialogo } from '@/shared/ui/Dialogo'
 import { Encabezado } from '@/shared/ui/Encabezado'
+import { Logo } from '@/shared/ui/Logo'
 import { Consulta } from '@/shared/ui/Estados'
 import { Segmentos } from '@/shared/ui/Pestanas'
 import { fecha } from '@/shared/lib/formato'
@@ -42,7 +43,7 @@ export function EmpresaLayout() {
     <div className="empresa">
       <header className="empresa-barra">
         <Link to={!empresa ? '/e' : empresa.estado === 'aprobada' ? '/e/vacantes' : '/e/solicitud'} className="marca">
-          SAI <span className="empresa-sub">Empresas</span>
+          <Logo /> SAI <span className="empresa-sub">Empresas</span>
         </Link>
         {empresa && (
           <>

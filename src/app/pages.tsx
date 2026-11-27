@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router'
+import { Navigate, Outlet } from 'react-router'
 import { Layout } from '@/app/Layout'
 import { InicioAdministracionPage } from '@/features/administracion/pages'
 import { InicioCapacitacionPage } from '@/features/capacitacion/pages'
@@ -6,12 +6,19 @@ import { InicioAtencionPage } from '@/features/expedientes/Borradores'
 import { useSesion, type Rol } from '@/features/identidad/sesion'
 import { BienvenidaPage } from '@/features/portal/AccesoUsuaria'
 import { PortalLayout } from '@/features/portal/PortalLayout'
+import { esMovil } from '@/shared/lib/dispositivo'
 import { NoDisponible } from '@/shared/ui/NoDisponible'
 
-/** Raíz `/`: Bienvenida para visitantes/usuarias o panel del personal si ya hay sesión. */
+/**
+ * Raíz `/`, punto de entrada. Con sesión de personal: su panel.
+ * Sin sesión, según el dispositivo (cabeceras User-Agent / Sec-CH-UA-Mobile):
+ * celular → Bienvenida del portal de usuarias (PWA); escritorio → acceso del personal.
+ */
 export function RaizPage() {
-  const { personal } = useSesion()
+  const { personal, usuaria } = useSesion()
   if (personal) return <Layout><HomePage /></Layout>
+  if (usuaria) return <Navigate to="/u/inicio" replace />
+  if (!esMovil()) return <Navigate to="/acceso" replace />
   return (
     <PortalLayout>
       <BienvenidaPage />
