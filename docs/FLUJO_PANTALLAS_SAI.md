@@ -35,7 +35,8 @@ src/
     ayuda/           directorio, botón de mantener 2 s, alerta de la usuaria, P-51, página neutra
     expedientes/     P-05, P-10 a P-17, P-41
     canalizacion/    P-30 y P-30b
-    capacitacion/    K-01 a K-08 (y datos de cursos y vacantes que usa el portal)
+    capacitacion/    K-01 a K-06 (y datos de cursos que usa el portal)
+    bolsa/           bolsa de trabajo: U-12, U-13, U-18 a U-21, portal de empresas E-01 a E-07, K-07 a K-12
     encuestas/       datos de U-14, U-15 y D-07
     administracion/  D-01, D-02, D-04, D-06, D-07
     bitacora/        datos de D-05
@@ -90,8 +91,12 @@ El **portal de usuarias** tiene su propio marco, pensado para celular (máximo 3
 | U-09 | Mi perfil | `/u/perfil` | `portal/PerfilPage.tsx` |
 | U-10 | Cursos y charlas | `/u/foro` | `portal/ForoEmpleo.tsx` |
 | U-11 | Detalle del curso | `/u/foro/:cursoId` | `portal/ForoEmpleo.tsx` |
-| U-12 | Bolsa de trabajo | `/u/empleo` | `portal/ForoEmpleo.tsx` |
-| U-13 | Detalle de vacante | `/u/empleo/:vacanteId` | `portal/ForoEmpleo.tsx` |
+| U-12 | Bolsa de trabajo | `/u/empleo` | `bolsa/Usuaria.tsx` |
+| U-13 | Detalle de vacante y postularse | `/u/empleo/:vacanteId` | `bolsa/Usuaria.tsx` |
+| U-18 | Mis postulaciones | `/u/empleo/postulaciones` | `bolsa/Usuaria.tsx` |
+| U-19 | Detalle de mi postulación (entrevista, resultado) | `/u/empleo/postulaciones/:postulacionId` | `bolsa/Usuaria.tsx` |
+| U-20 | Mi CV | `/u/empleo/cv` | `bolsa/Usuaria.tsx` |
+| U-21 | Armar mi CV (4 pasos) | `/u/empleo/cv/editar` | `bolsa/Usuaria.tsx` |
 | U-14 | Pendientes (encuestas) | `/u/pendientes` | `portal/EncuestasPages.tsx` |
 | U-15 | Pregunta (una por pantalla) | `/u/pendientes/:encuestaId` | `portal/EncuestasPages.tsx` |
 | U-16 | Directorio de ayuda (sin sesión) | `/u/directorio` | `ayuda/Directorio.tsx` |
@@ -134,8 +139,29 @@ También hay un directorio de ayuda dentro del panel (`/ayuda`) y uno público p
 | K-04 | Calendario | `/capacitacion/calendario` | `capacitacion/pages.tsx` |
 | K-05 | Pasar lista | `/capacitacion/calendario/:cursoId/lista` | `capacitacion/pages.tsx` |
 | K-06 | Planeación de visitas | `/capacitacion/visitas` | `capacitacion/pages.tsx` |
-| K-07 | Bolsa de trabajo | `/capacitacion/bolsa` | `capacitacion/pages.tsx` |
-| K-08 | Nueva vacante | `/capacitacion/bolsa/nueva` | `capacitacion/pages.tsx` |
+| K-07 | Bolsa de trabajo (vacantes) | `/capacitacion/bolsa` | `bolsa/Capacitacion.tsx` |
+| K-08 | Nueva vacante a nombre de una empresa | `/capacitacion/bolsa/nueva` | `bolsa/Capacitacion.tsx` |
+| K-09 | Por revisar (vacantes y empresas) | `/capacitacion/bolsa/revisar` | `bolsa/Capacitacion.tsx` |
+| K-10 | Empresas aliadas | `/capacitacion/bolsa/empresas` | `bolsa/Capacitacion.tsx` |
+| K-11 | Contrataciones (entregar contacto) | `/capacitacion/bolsa/contrataciones` | `bolsa/Capacitacion.tsx` |
+| K-12 | Revisar vacante | `/capacitacion/bolsa/vacantes/:vacanteId` | `bolsa/Capacitacion.tsx` |
+
+### E · Portal de empresas
+
+| ID | Pantalla | Ruta | Código |
+|---|---|---|---|
+| E-01 | Entrar con correo | `/e` | `bolsa/Empresa.tsx` |
+| E-02 | Código | `/e/codigo` | `bolsa/Empresa.tsx` |
+| E-03 | Registrar empresa | `/e/registro` | `bolsa/Empresa.tsx` |
+| E-04 | Mis vacantes | `/e/vacantes` | `bolsa/Empresa.tsx` |
+| E-05 | Publicar vacante | `/e/vacantes/nueva` | `bolsa/Empresa.tsx` |
+| E-05b | Editar vacante | `/e/vacantes/:vacanteId/editar` | `bolsa/Empresa.tsx` |
+| E-06 | Vacante y postulantes | `/e/vacantes/:vacanteId` | `bolsa/Empresa.tsx` |
+| E-07 | Postulante | `/e/vacantes/:vacanteId/postulantes/:postulacionId` | `bolsa/Empresa.tsx` |
+| E-08 | Mi solicitud (estado, motivo de rechazo) | `/e/solicitud` | `bolsa/Empresa.tsx` |
+| E-09 | Corregir y reenviar solicitud | `/e/solicitud/corregir` | `bolsa/Empresa.tsx` |
+
+El flujo completo para backend está en `FLUJO_BOLSA_TRABAJO_SAI.md`.
 
 ### D · Administración
 

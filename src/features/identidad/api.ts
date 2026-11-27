@@ -57,11 +57,25 @@ export function useMisSesiones() {
 }
 
 // ---------- Usuarias (portal) ----------
-/** POST /portal/auth/login — identificador: CURP o nombre completo (RF-02). Envía un código por mensaje. */
+/**
+ * Cómo se identifica la usuaria al entrar: celular, CURP o correo (RF-02).
+ * No se usa el nombre: varias personas pueden llamarse exactamente igual.
+ */
+export type EntradaUsuaria = { tipo: 'telefono'; telefono: string } | { tipo: 'curp'; curp: string } | { tipo: 'correo'; correo: string }
+
+/**
+ * POST /portal/auth/login — envía un código por SMS al celular registrado de la cuenta.
+ * Responde 202 aunque no exista la cuenta, para no revelar quién está registrada.
+ */
 export function useEntrarUsuaria() {
   return useMutation({
-    mutationFn: (c: { identificador: string; contrasena?: string }) =>
-      pedir<{ challengeId: string; telefonoMascara: string }>({ metodo: 'POST', ruta: '/portal/auth/login', cuerpo: c, simulado: () => ({ challengeId: 'uch-1', telefonoMascara: '•• •••• 42' }) }),
+    mutationFn: (c: EntradaUsuaria) =>
+      pedir<{ challengeId: string; telefonoMascara: string }>({
+        metodo: 'POST',
+        ruta: '/portal/auth/login',
+        cuerpo: c,
+        simulado: () => ({ challengeId: 'uch-1', telefonoMascara: `•• •••• ${c.tipo === 'telefono' ? c.telefono.slice(-2) : '42'}` }),
+      }),
   })
 }
 
@@ -76,7 +90,7 @@ export function useVerificarUsuaria() {
 /** POST /portal/accounts — autorregistro (origen "autorregistro" en RF-01). */
 export function useCrearCuentaUsuaria() {
   return useMutation({
-    mutationFn: (c: { nombre: string; curp: string; telefono: string; aceptaAviso: boolean }) =>
+    mutationFn: (c: { nombre: string; curp: string; telefono: string; correo?: string; aceptaAviso: boolean }) =>
       pedir<{ challengeId: string; telefonoMascara: string }>({
         metodo: 'POST',
         ruta: '/portal/accounts',

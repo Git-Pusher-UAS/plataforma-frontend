@@ -15,21 +15,6 @@ export type Curso = {
   /** Solo en la vista de la usuaria: si ella ya está inscrita. */
   inscrita?: boolean
 }
-export type Vacante = {
-  id: string
-  puesto: string
-  empresa: string
-  sector: string
-  horario: string
-  tipoEmpleo: string
-  ubicacion: string
-  descripcion: string
-  requisitos: string[]
-  publicadaEn?: string
-  actualizada: string
-  postulada?: boolean
-  postulaciones?: number
-}
 export type Visita = { id: string; sector: string; fecha: string; tema: string; responsable: string; estado: 'planeada' | 'realizada' }
 export type Asistente = { id: string; alias: string; presente: boolean }
 
@@ -45,11 +30,6 @@ const cursos: Curso[] = [
   { id: 'cu2', tipo: 'charla', titulo: 'Conoce tus derechos', descripcion: 'Charla con el área jurídica sobre derechos y trámites básicos.', fecha: '2026-12-15', hora: '11:00', lugar: 'En línea', cupo: 100, inscritas: 42, inscrita: true },
   { id: 'cu3', tipo: 'conferencia', titulo: 'Empleo y emprendimiento', descripcion: 'Empresas aliadas comparten oportunidades de trabajo en Ahome.', fecha: '2026-12-18', hora: '16:00', lugar: 'Auditorio municipal', cupo: 200, inscritas: 87 },
   { id: 'cu4', tipo: 'curso', titulo: 'Repostería básica', descripcion: 'Curso práctico de cuatro sesiones para emprender desde casa.', fecha: '2027-01-08', hora: '10:00', lugar: 'Centro comunitario Jiquilpan', cupo: 15, inscritas: 15 },
-]
-const vacantes: Vacante[] = [
-  { id: 'va1', puesto: 'Auxiliar administrativa', empresa: 'Empresa aliada A', sector: 'Servicios', horario: 'Matutino', tipoEmpleo: 'Tiempo completo', ubicacion: 'Los Mochis', descripcion: 'Apoyo en captura, archivo y atención a clientes.', requisitos: ['Secundaria terminada', 'Manejo básico de computadora'], publicadaEn: '2026-11-18', actualizada: '2026-11-24', postulaciones: 6 },
-  { id: 'va2', puesto: 'Cajera', empresa: 'Empresa aliada B', sector: 'Comercio', horario: 'Vespertino', tipoEmpleo: 'Medio tiempo', ubicacion: 'Los Mochis', descripcion: 'Cobro en caja y acomodo de mercancía.', requisitos: ['Mayor de 18 años'], publicadaEn: '2026-11-19', actualizada: '2026-11-22', postulaciones: 11 },
-  { id: 'va3', puesto: 'Empacadora', empresa: 'Empresa aliada C', sector: 'Agroindustria', horario: 'Matutino', tipoEmpleo: 'Temporal', ubicacion: 'Higuera de Zaragoza', descripcion: 'Selección y empaque de hortaliza en temporada.', requisitos: ['Disponibilidad de horario'], publicadaEn: '2026-11-17', actualizada: '2026-11-20', postulaciones: 3 },
 ]
 const visitas: Visita[] = [
   { id: 'vi1', sector: 'Sector 12', fecha: '2026-12-03', tema: 'Prevención de la violencia en el noviazgo', responsable: 'Capacitación', estado: 'planeada' },
@@ -134,80 +114,6 @@ export function useGuardarAsistencia(id: string) {
     mutationFn: (lista: Asistente[]) =>
       pedir<void>({ metodo: 'PUT', ruta: `/courses/${id}/attendance`, cuerpo: lista.map(({ id, presente }) => ({ enrollmentId: id, presente })), simulado: () => void (asistencia[id] = lista) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['asistencia', id] }),
-  })
-}
-
-// ---------- Bolsa de trabajo ----------
-export type FiltrosVacantes = { sector?: string; horario?: string; tipoEmpleo?: string; ubicacion?: string }
-
-/** GET /jobs?sector=&schedule=&type=&location= */
-export function useVacantes(f: FiltrosVacantes = {}) {
-  return useQuery({
-    queryKey: ['vacantes', f],
-    queryFn: () =>
-      pedir({
-        metodo: 'GET',
-        ruta: `/jobs${consulta({ sector: f.sector, schedule: f.horario, type: f.tipoEmpleo, location: f.ubicacion })}`,
-        simulado: () =>
-          vacantes.filter(
-            (v) => (!f.sector || v.sector === f.sector) && (!f.horario || v.horario === f.horario) && (!f.tipoEmpleo || v.tipoEmpleo === f.tipoEmpleo) && (!f.ubicacion || v.ubicacion === f.ubicacion),
-          ),
-      }),
-  })
-}
-
-export const OPCIONES_VACANTE = {
-  sector: ['Servicios', 'Comercio', 'Agroindustria', 'Salud', 'Educación'],
-  horario: ['Matutino', 'Vespertino', 'Mixto'],
-  tipoEmpleo: ['Tiempo completo', 'Medio tiempo', 'Temporal'],
-  ubicacion: ['Los Mochis', 'Higuera de Zaragoza', 'Topolobampo', 'Ahome'],
-}
-
-/** GET /jobs/{id} */
-export function useVacante(id: string) {
-  return useQuery({
-    queryKey: ['vacante', id],
-    queryFn: () => pedir({ metodo: 'GET', ruta: `/jobs/${id}`, simulado: () => vacantes.find((v) => v.id === id) ?? null }),
-  })
-}
-
-/** POST /jobs (Capacitación, supuesto 4) */
-export function useCrearVacante() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (nueva: Omit<Vacante, 'id' | 'publicadaEn' | 'actualizada' | 'postulaciones'>) =>
-      pedir<Vacante>({
-        metodo: 'POST',
-        ruta: '/jobs',
-        cuerpo: nueva,
-        simulado: () => {
-          const hoy = new Date().toISOString().slice(0, 10)
-          const v = { ...nueva, id: `va${vacantes.length + 1}`, publicadaEn: hoy, actualizada: hoy, postulaciones: 0 }
-          vacantes.unshift(v)
-          return v
-        },
-      }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['vacantes'] }),
-  })
-}
-
-/** POST /jobs/{id}/applications — la Secretaría hace de puente con la empresa (supuesto 5). */
-export function usePostularme() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) =>
-      pedir<void>({
-        metodo: 'POST',
-        ruta: `/jobs/${id}/applications`,
-        simulado: () => {
-          const v = vacantes.find((x) => x.id === id)
-          if (v) v.postulada = true
-        },
-      }),
-    onSuccess: (_d, id) => {
-      void qc.invalidateQueries({ queryKey: ['vacante', id] })
-      void qc.invalidateQueries({ queryKey: ['vacantes'] })
-    },
   })
 }
 
