@@ -101,8 +101,8 @@ export function Layout({ children }: { children?: ReactNode }) {
 
         {menu.map(({ to, label, icon: Icon, inferior }) => (
           <NavLink key={to} to={to} end={exacta(to)} className={inferior ? 'menu-item oculto-en-movil' : 'menu-item'} onClick={() => setAbierto(false)}>
-            <Icon size={20} strokeWidth={2} aria-hidden="true" />
-            <span className="menu-texto">{label}</span>
+            <Icon size={18} strokeWidth={2} aria-hidden="true" />
+            {label}
           </NavLink>
         ))}
 
