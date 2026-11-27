@@ -657,7 +657,12 @@ a.boton, a.boton-secundario, a.boton-ayuda { text-align: center; }
   color: var(--sai-suave); font-weight: 700; text-decoration: none; border-bottom: 3px solid transparent;
 }
 .pestana[aria-current="page"] { color: var(--sai-violeta); border-bottom-color: var(--sai-violeta); }
-.segmentos { flex-wrap: wrap; }
+.segmentos {
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+  border-radius: 24px;
+}
 .pasos { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; margin: 0; padding: 0; }
 .pasos li { padding: .25rem .85rem; border-radius: var(--sai-radio-boton); background: var(--sai-lila); color: var(--sai-suave); font-weight: 700; font-size: 14px; }
 .pasos li[aria-current="step"] { background: var(--sai-violeta); color: #fff; }
