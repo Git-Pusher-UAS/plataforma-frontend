@@ -27,6 +27,8 @@ export type Vacante = {
   descripcion: string
   requisitos: string[]
   estado: EstadoVacante
+  /** Fecha en que se publicó por primera vez (la pone el servidor al aprobarla). */
+  publicadaEn?: string
   /** Lo que Capacitación pidió corregir (solo con estado «cambios»). */
   motivoCambios?: string
   actualizada: string
@@ -141,11 +143,11 @@ const empresas: Empresa[] = [
 ]
 
 const vacantes: Vacante[] = [
-  { id: 'va1', empresaId: 'em1', empresa: 'Empresa aliada A', puesto: 'Auxiliar administrativa', sector: 'Servicios', horario: 'Matutino', tipoEmpleo: 'Tiempo completo', ubicacion: 'Los Mochis', sueldo: '$8,500 al mes', descripcion: 'Apoyo en captura, archivo y atención a clientes.', requisitos: ['Secundaria terminada', 'Manejo básico de computadora'], estado: 'publicada', actualizada: '2026-11-24' },
-  { id: 'va2', empresaId: 'em2', empresa: 'Empresa aliada B', puesto: 'Cajera', sector: 'Comercio', horario: 'Vespertino', tipoEmpleo: 'Medio tiempo', ubicacion: 'Los Mochis', descripcion: 'Cobro en caja y acomodo de mercancía.', requisitos: ['Mayor de 18 años'], estado: 'publicada', actualizada: '2026-11-22' },
-  { id: 'va3', empresaId: 'em3', empresa: 'Empresa aliada C', puesto: 'Empacadora', sector: 'Agroindustria', horario: 'Matutino', tipoEmpleo: 'Temporal', ubicacion: 'Higuera de Zaragoza', sueldo: '$450 por día', descripcion: 'Selección y empaque de hortaliza en temporada.', requisitos: ['Disponibilidad de horario'], estado: 'publicada', actualizada: '2026-11-20' },
+  { id: 'va1', empresaId: 'em1', empresa: 'Empresa aliada A', puesto: 'Auxiliar administrativa', sector: 'Servicios', horario: 'Matutino', tipoEmpleo: 'Tiempo completo', ubicacion: 'Los Mochis', sueldo: '$8,500 al mes', descripcion: 'Apoyo en captura, archivo y atención a clientes.', requisitos: ['Secundaria terminada', 'Manejo básico de computadora'], estado: 'publicada', publicadaEn: '2026-11-18', actualizada: '2026-11-24' },
+  { id: 'va2', empresaId: 'em2', empresa: 'Empresa aliada B', puesto: 'Cajera', sector: 'Comercio', horario: 'Vespertino', tipoEmpleo: 'Medio tiempo', ubicacion: 'Los Mochis', descripcion: 'Cobro en caja y acomodo de mercancía.', requisitos: ['Mayor de 18 años'], estado: 'publicada', publicadaEn: '2026-11-19', actualizada: '2026-11-22' },
+  { id: 'va3', empresaId: 'em3', empresa: 'Empresa aliada C', puesto: 'Empacadora', sector: 'Agroindustria', horario: 'Matutino', tipoEmpleo: 'Temporal', ubicacion: 'Higuera de Zaragoza', sueldo: '$450 por día', descripcion: 'Selección y empaque de hortaliza en temporada.', requisitos: ['Disponibilidad de horario'], estado: 'publicada', publicadaEn: '2026-11-17', actualizada: '2026-11-20' },
   { id: 'va4', empresaId: 'em1', empresa: 'Empresa aliada A', puesto: 'Recepcionista', sector: 'Servicios', horario: 'Mixto', tipoEmpleo: 'Tiempo completo', ubicacion: 'Los Mochis', descripcion: 'Recibir a visitantes, contestar llamadas y agendar citas.', requisitos: ['Preparatoria terminada'], estado: 'en_revision', actualizada: '2026-11-25' },
-  { id: 'va5', empresaId: 'em1', empresa: 'Empresa aliada A', puesto: 'Intendencia', sector: 'Servicios', horario: 'Matutino', tipoEmpleo: 'Medio tiempo', ubicacion: 'Topolobampo', descripcion: 'Limpieza de oficinas.', requisitos: [], estado: 'cerrada', actualizada: '2026-10-30' },
+  { id: 'va5', empresaId: 'em1', empresa: 'Empresa aliada A', puesto: 'Intendencia', sector: 'Servicios', horario: 'Matutino', tipoEmpleo: 'Medio tiempo', ubicacion: 'Topolobampo', descripcion: 'Limpieza de oficinas.', requisitos: [], estado: 'cerrada', publicadaEn: '2026-10-20', actualizada: '2026-10-30' },
 ]
 
 // CV de la usuaria en sesión. null = aún no lo arma.
@@ -605,6 +607,7 @@ export function useRevisarVacante(id: string) {
           const v = vacantes.find((x) => x.id === id)
           if (!v) return
           v.estado = r.aprobar ? 'publicada' : 'cambios'
+          if (r.aprobar && !v.publicadaEn) v.publicadaEn = hoy()
           v.motivoCambios = r.aprobar ? undefined : r.motivo
           v.actualizada = hoy()
         },
@@ -624,7 +627,7 @@ export function useCrearVacanteAdmin() {
         cuerpo: d,
         simulado: () => {
           const e = empresas.find((x) => x.id === d.empresaId)!
-          const v: Vacante = { ...d, id: `va${vacantes.length + 1}`, empresa: e.nombre, estado: 'publicada', actualizada: hoy() }
+          const v: Vacante = { ...d, id: `va${vacantes.length + 1}`, empresa: e.nombre, estado: 'publicada', publicadaEn: hoy(), actualizada: hoy() }
           vacantes.unshift(v)
           return v
         },

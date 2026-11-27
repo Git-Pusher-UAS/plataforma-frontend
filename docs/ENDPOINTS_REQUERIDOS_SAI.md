@@ -966,6 +966,7 @@ Máquinas de estado y reglas completas: `docs/FLUJO_BOLSA_TRABAJO_SAI.md`.
   "descripcion": "Apoyo en captura, archivo y atención a clientes.",
   "requisitos": ["Secundaria terminada"],
   "estado": "publicada",
+  "publicadaEn": "2026-11-18",
   "motivoCambios": null,
   "actualizada": "2026-11-24",
   "postulada": false,
@@ -974,7 +975,7 @@ Máquinas de estado y reglas completas: `docs/FLUJO_BOLSA_TRABAJO_SAI.md`.
 }
 ```
 
-`estado`: `en_revision` · `cambios` · `publicada` · `pausada` · `cerrada`. `postulada` solo para la usuaria; `postulaciones` y `nuevas` solo para empresa y Capacitación.
+`estado`: `en_revision` · `cambios` · `publicada` · `pausada` · `cerrada`. `publicadaEn` (AAAA-MM-DD) lo pone el **servidor** la primera vez que la vacante pasa a `publicada` y no cambia después; `null` si nunca se publicó. Las tarjetas muestran «Publicada el 18 de nov». `postulada` solo para la usuaria; `postulaciones` y `nuevas` solo para empresa y Capacitación.
 
 **Objeto `Cv`**
 

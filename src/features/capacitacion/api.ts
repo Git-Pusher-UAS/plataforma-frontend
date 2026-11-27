@@ -148,6 +148,11 @@ export function partesFecha(iso: string) {
   const [a, m, d] = iso.split('-').map(Number)
   return { dia: d ?? 1, mes: MESES[(m ?? 1) - 1] ?? '', anio: a ?? 0 }
 }
+/** Formato corto para tarjetas y encabezados: "19 de nov". */
+export function fechaCorta(iso: string) {
+  const { dia, mes } = partesFecha(iso)
+  return `${dia} de ${mes.toLowerCase()}`
+}
 export function fechaLarga(iso: string) {
   return new Date(`${iso}T12:00:00`).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
 }

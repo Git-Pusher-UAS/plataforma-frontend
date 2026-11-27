@@ -24,7 +24,7 @@ import {
   type Postulacion,
 } from '@/features/bolsa/api'
 import { AvancePostulacion, ChipPostulacion, OpcionesMultiples, OpcionesUnicas, Volver } from '@/features/bolsa/componentes'
-import { fechaLarga, hora12 } from '@/features/capacitacion/api'
+import { fechaCorta, fechaLarga, hora12 } from '@/features/capacitacion/api'
 import { Dialogo } from '@/shared/ui/Dialogo'
 import { Consulta } from '@/shared/ui/Estados'
 import { Pestanas } from '@/shared/ui/Pestanas'
@@ -93,19 +93,23 @@ export function EmpleoPage() {
         {(vacantes) => (
           <ul className="lista-simple pila-corta">
             {vacantes.map((v) => (
-              <li key={v.id} className="tarjeta vacante">
-                <h3>
-                  <Link to={`/u/empleo/${v.id}`}>{v.puesto}</Link>
-                </h3>
-                <p className="texto-suave">
-                  {v.empresa} · {v.ubicacion}
-                </p>
-                <p className="chips">
-                  {v.sueldo && <span className="chip chip-sueldo">{v.sueldo}</span>}
-                  <span className="chip">{v.horario}</span>
-                  <span className="chip">{v.tipoEmpleo}</span>
-                </p>
-                {v.postulada && <span className="etiqueta etiqueta-capacitacion">Ya te postulaste</span>}
+              <li key={v.id}>
+                {/* Toda la tarjeta abre la vacante (más fácil de tocar en el celular). */}
+                <Link to={`/u/empleo/${v.id}`} className="tarjeta vacante tarjeta-vacante">
+                  <div className="tarjeta-cabecera">
+                    <h3>{v.puesto}</h3>
+                    {v.publicadaEn && <span className="publicada-tarjeta">Publicada el {fechaCorta(v.publicadaEn)}</span>}
+                  </div>
+                  <p className="texto-suave">
+                    {v.empresa} · {v.ubicacion}
+                  </p>
+                  <p className="chips">
+                    {v.sueldo && <span className="chip chip-sueldo">{v.sueldo}</span>}
+                    <span className="chip">{v.horario}</span>
+                    <span className="chip">{v.tipoEmpleo}</span>
+                  </p>
+                  {v.postulada && <span className="etiqueta etiqueta-capacitacion">Ya te postulaste</span>}
+                </Link>
               </li>
             ))}
           </ul>
@@ -135,9 +139,12 @@ export function DetalleVacantePage() {
         {(v) =>
           v && (
             <>
-              <div>
-                <h1>{v.puesto}</h1>
-                <p className="texto-suave">{v.empresa}</p>
+              <div className="detalle-cabecera">
+                <div>
+                  <h1>{v.puesto}</h1>
+                  <p className="texto-suave">{v.empresa}</p>
+                </div>
+                {v.publicadaEn && <span className="publicada-insignia">Publicada el {fechaCorta(v.publicadaEn)}</span>}
               </div>
               <p className="chips">
                 {v.sueldo && <span className="chip chip-sueldo">{v.sueldo}</span>}
