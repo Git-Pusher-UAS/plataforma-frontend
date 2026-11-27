@@ -733,11 +733,21 @@ a.indicador:hover, a.mosaico-item:hover { border-color: var(--sai-violeta); }
 }
 
 /* Pantallas de acceso del personal */
-.acceso { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; background: var(--sai-crema); }
+.acceso { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr; background: var(--sai-crema); }
 .barra-acceso { justify-content: space-between; }
 .menu-marca-oscura { font: 700 2rem/1 var(--sai-serif); color: var(--sai-ciruela); }
-.acceso-tarjeta { width: min(28rem, calc(100% - 2rem)); margin: 2rem auto; align-self: center; padding: 1.75rem; }
-.acceso-pie { text-align: center; padding: 1rem; font-size: 14px; }
+.acceso-contenido { width: min(28rem, calc(100% - 2rem)); margin: 1.5rem auto; align-self: center; }
+.acceso-tarjeta { width: 100%; padding: 1.75rem; }
+.acceso-pie { text-align: center; margin: .85rem 0 0; padding: .25rem 1rem; font-size: 14px; }
+.campo-contrasena { position: relative; display: flex; align-items: center; }
+.campo-contrasena input { width: 100%; padding-right: 3rem; }
+.campo-contrasena input[type="password"]::-ms-reveal { display: none; }
+.boton-ver-contrasena {
+  position: absolute; right: .25rem; display: inline-grid; place-items: center;
+  width: 44px; height: 44px; border: 0; border-radius: var(--sai-radio-campo);
+  background: transparent; color: var(--sai-suave); cursor: pointer;
+}
+.boton-ver-contrasena:hover { color: var(--sai-ciruela); }
 
 /* Calendario (K-04) */
 .calendario-titulo { text-transform: capitalize; }
