@@ -19,12 +19,12 @@ export function InicioAdministracionPage() {
   const resumen = useResumen('12m')
   const solicitudes = useSolicitudes('pendiente')
   const accesos = [
-    { to: '/administracion/reportes', texto: 'Reportes', icono: ChartColumn },
-    { to: '/administracion/mapa', texto: 'Mapa de Ahome', icono: Map },
-    { to: '/administracion/solicitudes', texto: 'Solicitudes de acceso', icono: Inbox, cuenta: solicitudes.data?.length },
-    { to: '/administracion/bitacora', texto: 'Bitácora', icono: ScrollText },
-    { to: '/administracion/personal', texto: 'Personal', icono: Users },
-    { to: '/administracion/opinion', texto: 'Opinión de usuarias', icono: MessageSquareHeart },
+    { to: '/administracion/reportes', texto: 'Reportes', descripcion: 'Cifras de atención, origen y áreas por periodo', icono: ChartColumn },
+    { to: '/administracion/mapa', texto: 'Mapa de Ahome', descripcion: 'Distribución geográfica agregada por AGEB', icono: Map },
+    { to: '/administracion/solicitudes', texto: 'Solicitudes de acceso', descripcion: 'Autorizar o rechazar acceso a expedientes', icono: Inbox, cuenta: solicitudes.data?.length },
+    { to: '/administracion/bitacora', texto: 'Bitácora', descripcion: 'Registro de consultas y movimientos del personal', icono: ScrollText },
+    { to: '/administracion/personal', texto: 'Personal', descripcion: 'Altas, áreas y estado de cuentas laborales', icono: Users },
+    { to: '/administracion/opinion', texto: 'Opinión de usuarias', descripcion: 'Resultados agregados de encuestas de salida', icono: MessageSquareHeart },
   ]
   return (
     <section className="pila">
@@ -44,11 +44,17 @@ export function InicioAdministracionPage() {
           </div>
         )}
       </Consulta>
-      <div className="mosaico mosaico-panel">
-        {accesos.map(({ to, texto, icono: Icono, cuenta }) => (
-          <Link key={to} to={to} className="tarjeta mosaico-item">
-            <Icono size={24} aria-hidden="true" /> {texto}
-            {!!cuenta && <span className="insignia">{cuenta}</span>}
+      <div className="mosaico mosaico-panel admin-mosaico">
+        {accesos.map(({ to, texto, descripcion, icono: Icono, cuenta }) => (
+          <Link key={to} to={to} className="tarjeta mosaico-item admin-acceso">
+            <div className="admin-acceso-cabeza">
+              <Icono size={28} aria-hidden="true" />
+              {!!cuenta && <span className="insignia">{cuenta}</span>}
+            </div>
+            <div className="admin-acceso-cuerpo">
+              <span className="admin-acceso-titulo">{texto}</span>
+              <span className="texto-suave admin-acceso-desc">{descripcion}</span>
+            </div>
           </Link>
         ))}
       </div>
@@ -56,10 +62,10 @@ export function InicioAdministracionPage() {
   )
 }
 
-function Barras({ titulo, serie }: { titulo: string; serie: Serie[] }) {
+function Barras({ titulo, serie, className }: { titulo: string; serie: Serie[]; className?: string }) {
   const max = Math.max(1, ...serie.map((s) => s.valor ?? 0))
   return (
-    <figure className="tarjeta barras">
+    <figure className={className ? `tarjeta barras ${className}` : 'tarjeta barras'}>
       {titulo && <figcaption className="subtitulo">{titulo}</figcaption>}
       <ul className="lista-simple">
         {serie.map((s) => (
@@ -104,8 +110,8 @@ export function ReportesPage() {
                 </div>
               ))}
             </div>
-            <div className="rejilla-graficas">
-              <Barras titulo="Casos nuevos por mes" serie={r.porMes} />
+            <div className="rejilla-graficas admin-graficas">
+              <Barras titulo="Casos nuevos por mes" serie={r.porMes} className="admin-grafica-principal" />
               <Barras titulo="Origen del primer contacto" serie={r.porOrigen} />
               <Barras titulo="Atención por área" serie={r.porArea} />
             </div>
@@ -461,7 +467,7 @@ export function OpinionPage() {
       </Encabezado>
       <Consulta q={q} vacio="Aún no hay respuestas.">
         {(lista) => (
-          <div className="rejilla-graficas">
+          <div className="rejilla-graficas admin-opinion-rejilla">
             {lista.map((r) => (
               <div key={r.encuestaId} className="tarjeta pila-corta">
                 <h2 className="subtitulo">{r.titulo}</h2>

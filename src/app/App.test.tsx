@@ -229,4 +229,35 @@ describe('rutas', () => {
     await u.click(screen.getByRole('button', { name: 'Enviar código' }))
     expect(await screen.findByRole('heading', { name: 'Escribe tu código' })).toBeInTheDocument()
   })
+
+  it('administración oculta «Necesito ayuda», conserva «Salida rápida» y usa el contenedor dedicado', async () => {
+    renderAt('/', persona('administracion'))
+    expect(await screen.findByRole('heading', { name: /hola, persona/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /necesito ayuda/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /salida rápida/i })).toBeInTheDocument()
+    expect(screen.getByRole('main')).toHaveClass('pagina', 'admin-pagina')
+    expect(screen.getByText(/cifras de atención, origen y áreas por periodo/i)).toBeInTheDocument()
+  })
+
+  it('los demás roles conservan «Necesito ayuda» sin la clase de administración', async () => {
+    renderAt('/', persona('psicologia'))
+    expect(await screen.findByRole('heading', { name: /hola, persona/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /necesito ayuda/i })).toBeInTheDocument()
+    expect(screen.getByRole('main')).not.toHaveClass('admin-pagina')
+  })
+
+  it('en el panel, el botón de menú en la barra solo aparece cuando el menú de escritorio está oculto', async () => {
+    const u = userEvent.setup()
+    renderAt('/', persona('administracion'))
+    expect(await screen.findByRole('heading', { name: /hola, persona/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /mostrar menú/i })).not.toBeInTheDocument()
+
+    await u.click(screen.getByRole('button', { name: 'Cerrar menú' }))
+    const mostrar = screen.getByRole('button', { name: /mostrar menú/i })
+    expect(mostrar).toBeInTheDocument()
+    expect(mostrar).toHaveAttribute('aria-expanded', 'false')
+
+    await u.click(mostrar)
+    expect(screen.queryByRole('button', { name: /mostrar menú/i })).not.toBeInTheDocument()
+  })
 })
