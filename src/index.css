@@ -1006,3 +1006,30 @@ a.indicador:hover, a.mosaico-item:hover { border-color: var(--sai-violeta); }
 a.atajo { border: 1px solid transparent; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
 a.atajo:hover, a.atajo:focus-visible { background: #fff; border-color: var(--sai-violeta); box-shadow: 0 4px 14px rgba(106, 75, 168, .18); transform: translateY(-1px); }
 a.atajo:hover strong, a.atajo:focus-visible strong { color: var(--sai-violeta); }
+
+/* Inicio de la usuaria: mapa con espacios de atención, ocupa el ancho de dos tarjetas */
+.mosaico-mapa { grid-column: 1 / -1; color: var(--sai-ciruela); }
+.mosaico-mapa .fila-accion { align-items: center; }
+.mosaico-mapa .subtitulo { margin: 0; }
+.mapa-atencion-lienzo { border-radius: var(--sai-radio-campo); background: var(--sai-crema); overflow: hidden; }
+.mapa-atencion-lienzo .mapa { display: block; width: 100%; height: 260px; }
+.mapa-punto { cursor: pointer; }
+.mapa-punto circle { fill: var(--sai-violeta); stroke: #fff; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.mapa-punto text { fill: #fff; font-family: var(--sai-sans); font-weight: 800; pointer-events: none; }
+.mapa-punto.activo circle, .mapa-punto:hover circle { fill: var(--sai-ciruela); }
+.puntos-atencion { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.punto-atencion { display: flex; gap: .75rem; padding: .75rem; border: 1px solid var(--sai-borde); border-radius: var(--sai-radio-campo); font-size: 15px; }
+.punto-atencion.activo { border-color: var(--sai-violeta); background: var(--sai-lila); }
+.punto-numero {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--sai-violeta); color: #fff; font-weight: 800; font-size: 14px;
+}
+.punto-dato { display: flex; gap: .4rem; align-items: flex-start; }
+.punto-dato svg { flex: none; margin-top: .2rem; color: var(--sai-violeta); }
+.punto-telefono { font-weight: 700; color: var(--sai-violeta); min-height: 44px; align-items: center; }
+.punto-telefono svg { margin-top: 0; }
+.linea-violeta { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; text-decoration: none; }
+.linea-violeta-texto { display: grid; text-align: left; line-height: 1.25; }
+.linea-violeta-texto span { font-size: 14px; font-weight: 600; }
+.linea-violeta-texto strong { font-size: 1.15rem; white-space: nowrap; }
+.mapa-atencion-lienzo .mapa { height: 280px; }
