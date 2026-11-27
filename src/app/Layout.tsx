@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react'
-import { Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
+import { Menu, PanelLeftOpen, X } from 'lucide-react'
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router'
 import { MENU_POR_ROL, barraInferior } from '@/app/nav'
 import { QuickExitButton } from '@/features/ayuda/QuickExitButton'
@@ -89,7 +89,12 @@ export function Layout() {
       <nav id="menu-principal" className="menu-lateral" aria-label="Principal">
         <div className="menu-cabecera">
           <span className="menu-marca">SAI</span>
-          <button type="button" className="menu-cerrar" aria-label="Cerrar menú" onClick={() => setAbierto(false)}>
+          <button
+            type="button"
+            className="menu-cerrar"
+            aria-label="Cerrar menú"
+            onClick={() => (abierto ? setAbierto(false) : setOculto(true))}
+          >
             <X size={20} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
@@ -126,17 +131,19 @@ export function Layout() {
           <button type="button" className="btn-menu-movil" aria-label="Abrir menú" aria-expanded={abierto} aria-controls="menu-principal" onClick={() => setAbierto(true)}>
             <Menu size={20} strokeWidth={2} aria-hidden="true" /> Menú
           </button>
-          <button
-            type="button"
-            className="btn-menu-escritorio"
-            aria-label={oculto ? 'Mostrar menú' : 'Ocultar menú'}
-            aria-expanded={!oculto}
-            aria-controls="menu-principal"
-            onClick={() => setOculto((o) => !o)}
-          >
-            {oculto ? <PanelLeftOpen size={20} strokeWidth={2} aria-hidden="true" /> : <PanelLeftClose size={20} strokeWidth={2} aria-hidden="true" />}
-            Menú
-          </button>
+          {oculto && (
+            <button
+              type="button"
+              className="btn-menu-escritorio"
+              aria-label="Mostrar menú"
+              aria-expanded={false}
+              aria-controls="menu-principal"
+              onClick={() => setOculto(false)}
+            >
+              <PanelLeftOpen size={20} strokeWidth={2} aria-hidden="true" />
+              Menú
+            </button>
+          )}
           <span className="barra-marca">SAI</span>
 
           <span className="barra-persona">
@@ -145,12 +152,12 @@ export function Layout() {
           </span>
 
           <div className="salida-rapida">
-            <NecesitoAyudaPersonal />
+            {personal.rol !== 'administracion' && <NecesitoAyudaPersonal />}
             <QuickExitButton />
           </div>
         </header>
 
-        <main className="pagina">
+        <main className={personal.rol === 'administracion' ? 'pagina admin-pagina' : 'pagina'}>
           <Outlet />
         </main>
       </div>
