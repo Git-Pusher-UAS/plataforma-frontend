@@ -105,7 +105,8 @@ export function EntrarEmpresaPage() {
     entrar.mutate(correo.trim(), { onSuccess: (r) => navegar('/e/codigo', { state: r }) })
   }
   return (
-    <section className="pila angosta">
+    <section className="pila angosta empresa-acceso">
+      <Volver a="/" texto="Volver" />
       <Encabezado antetitulo="Bolsa de trabajo" titulo="Entrar como empresa">
         Publica vacantes y revisa a las personas que se postulan.
       </Encabezado>
@@ -153,7 +154,8 @@ export function CodigoEmpresaPage() {
     )
   }
   return (
-    <section className="pila angosta">
+    <section className="pila angosta empresa-acceso">
+      <Volver a="/e" texto="Volver" />
       <Encabezado titulo="Escribe tu código">Lo enviamos a {reto.correoMascara}.</Encabezado>
       <form className="tarjeta pila" onSubmit={enviar}>
         <div className="campo">
@@ -176,7 +178,8 @@ export function CodigoEmpresaPage() {
   )
 }
 
-const RFC = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/
+const RFC = /^[A-Z]{3,4}\d{6}[A-Z0-9]{3}$/
+const limpiarRfc = (valor: string) => valor.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 13)
 
 /** Formulario de datos de la empresa: alta (E-03) y corrección tras un rechazo (E-09). */
 function FormEmpresa({
@@ -195,7 +198,8 @@ function FormEmpresa({
   onEnviar: (d: RegistroEmpresa) => void
 }) {
   const [f, setF] = useState<RegistroEmpresa>(inicial)
-  const rfc = f.rfc.toUpperCase().replace(/\s/g, '')
+  const [verAviso, setVerAviso] = useState(false)
+  const rfc = limpiarRfc(f.rfc)
   const rfcInvalido = rfc.length > 0 && !RFC.test(rfc)
   const campo = (k: 'nombre' | 'contacto' | 'correo' | 'telefono', texto: string, extra: InputHTMLAttributes<HTMLInputElement> = {}) => (
     <div className="campo">
@@ -204,58 +208,97 @@ function FormEmpresa({
     </div>
   )
   return (
-    <form
-      className="tarjeta pila"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (!rfcInvalido) onEnviar({ ...f, nombre: f.nombre.trim(), contacto: f.contacto.trim(), correo: f.correo.trim(), rfc })
-      }}
-    >
-      <div className="rejilla-2">
-        {campo('nombre', 'Nombre de la empresa', { maxLength: 100 })}
-        <div className={`campo ${rfcInvalido ? 'campo-error' : ''}`}>
-          <label htmlFor="r-rfc">RFC</label>
-          <input id="r-rfc" value={f.rfc} onChange={(e) => setF({ ...f, rfc: e.target.value })} required aria-invalid={rfcInvalido} aria-describedby="rfc-ayuda" />
-          <span id="rfc-ayuda" className={rfcInvalido ? 'texto-error' : 'campo-ayuda'}>
-            {rfcInvalido ? 'Revisa el RFC: 12 o 13 caracteres.' : '12 caracteres (moral) o 13 (física).'}
-          </span>
+    <>
+      <form
+        className="tarjeta pila"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!rfcInvalido) onEnviar({ ...f, nombre: f.nombre.trim(), contacto: f.contacto.trim(), correo: f.correo.trim(), rfc })
+        }}
+      >
+        <div className="rejilla-2">
+          {campo('nombre', 'Nombre de la empresa', { maxLength: 100 })}
+          <div className={`campo ${rfcInvalido ? 'campo-error' : ''}`}>
+            <label htmlFor="r-rfc">RFC</label>
+            <input
+              id="r-rfc"
+              value={f.rfc}
+              minLength={12}
+              maxLength={13}
+              autoCapitalize="characters"
+              onChange={(e) => setF({ ...f, rfc: limpiarRfc(e.target.value) })}
+              required
+              aria-invalid={rfcInvalido}
+              aria-describedby="rfc-ayuda"
+            />
+            <span id="rfc-ayuda" className={rfcInvalido ? 'texto-error' : 'campo-ayuda'}>
+              {rfcInvalido ? 'Revisa el RFC: 12 o 13 caracteres.' : '12 caracteres (moral) o 13 (física).'}
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="campo">
-        <label htmlFor="r-sector">Sector</label>
-        <select id="r-sector" value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })}>
-          {OPCIONES_VACANTE.sector.map((o) => (
-            <option key={o}>{o}</option>
-          ))}
-        </select>
-      </div>
-      <div className="rejilla-2">
-        {campo('contacto', 'Persona de contacto', { maxLength: 80 })}
-        {campo('telefono', 'Teléfono', { type: 'tel', inputMode: 'tel', minLength: 10, maxLength: 10 })}
-      </div>
-      {correoFijo ? (
         <div className="campo">
-          <label htmlFor="r-correo">Correo para entrar</label>
-          <input id="r-correo" value={f.correo} readOnly aria-describedby="correo-ayuda" />
-          <span id="correo-ayuda" className="campo-ayuda">
-            No se puede cambiar aquí. Si necesitas otro correo, llama a la Secretaría.
+          <label htmlFor="r-sector">Sector</label>
+          <select id="r-sector" value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })}>
+            {OPCIONES_VACANTE.sector.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>
+        </div>
+        <div className="rejilla-2">
+          {campo('contacto', 'Persona de contacto', { maxLength: 80 })}
+          {campo('telefono', 'Teléfono', { type: 'tel', inputMode: 'tel', minLength: 10, maxLength: 10 })}
+        </div>
+        {correoFijo ? (
+          <div className="campo">
+            <label htmlFor="r-correo">Correo para entrar</label>
+            <input id="r-correo" value={f.correo} readOnly aria-describedby="correo-ayuda" />
+            <span id="correo-ayuda" className="campo-ayuda">
+              No se puede cambiar aquí. Si necesitas otro correo, llama a la Secretaría.
+            </span>
+          </div>
+        ) : (
+          campo('correo', 'Correo para entrar', { type: 'email' })
+        )}
+        <div className="empresa-aviso">
+          <input
+            id="r-aviso"
+            type="checkbox"
+            aria-labelledby="r-aviso-texto"
+            checked={f.aceptaAviso}
+            onChange={(e) => setF({ ...f, aceptaAviso: e.target.checked })}
+            required
+          />
+          <span id="r-aviso-texto">
+            <label htmlFor="r-aviso">Acepto el </label>
+            <button type="button" className="enlace-boton" onClick={() => setVerAviso(true)}>
+              aviso de privacidad
+            </button>
+            <label htmlFor="r-aviso"> y no compartir los datos de las postulantes</label>
           </span>
         </div>
-      ) : (
-        campo('correo', 'Correo para entrar', { type: 'email' })
-      )}
-      <label className="opcion">
-        <input type="checkbox" checked={f.aceptaAviso} onChange={(e) => setF({ ...f, aceptaAviso: e.target.checked })} required /> Acepto el aviso de privacidad y no compartir los datos de las postulantes
-      </label>
-      {error && (
-        <p className="texto-error" role="alert">
-          {error}
+        {error && (
+          <p className="texto-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="boton" disabled={enviando}>
+          {enviando ? 'Enviando…' : textoEnviar}
+        </button>
+      </form>
+      <Dialogo abierto={verAviso} titulo="Aviso de privacidad" onCerrar={() => setVerAviso(false)}>
+        <p>
+          La Secretaría de Mujeres recaba los datos de identificación y contacto de la empresa únicamente para verificar su registro y administrar su participación en la Bolsa de Trabajo del Sistema de Atención Integral (SAI).
         </p>
-      )}
-      <button className="boton" disabled={enviando}>
-        {enviando ? 'Enviando…' : textoEnviar}
-      </button>
-    </form>
+        <p>
+          Al registrarse, la empresa se compromete a tratar de forma confidencial la información de las postulantes, usarla exclusivamente para fines de vinculación laboral y no compartirla con terceros.
+        </p>
+        <div className="fila-botones">
+          <button type="button" className="boton" onClick={() => setVerAviso(false)}>
+            Entendido
+          </button>
+        </div>
+      </Dialogo>
+    </>
   )
 }
 
@@ -278,7 +321,7 @@ export function RegistroEmpresaPage() {
     )
   return (
     <section className="pila angosta">
-      <Volver a="/e" texto="Entrar" />
+      <Volver a="/e" texto="Volver" />
       <Encabezado antetitulo="Bolsa de trabajo" titulo="Registrar mi empresa">
         Solo pedimos lo necesario para verificar que la empresa existe.
       </Encabezado>
@@ -486,6 +529,7 @@ export function NuevaVacanteEmpresaPage() {
   const navegar = useNavigate()
   return (
     <section className="pila angosta">
+      <Volver a="/e/vacantes" texto="Mis vacantes" />
       <Encabezado antetitulo="Empresa" titulo="Publicar vacante">
         Capacitación la revisa y la publica. Te avisamos por correo.
       </Encabezado>

@@ -354,7 +354,7 @@ button {
 }
 .tarjeta-lila { background: var(--sai-lila); border-color: transparent; }
 
-.campo { display: grid; gap: .35rem; margin-bottom: 1rem; }
+.campo { display: grid; gap: .35rem; margin-bottom: 1rem; align-content: start; }
 .campo label { font-weight: 700; }
 .campo-ayuda { color: var(--sai-suave); font-size: 14px; }
 
@@ -362,6 +362,8 @@ button {
 .campo select,
 .campo textarea {
   font: inherit;
+  width: 100%;
+  min-width: 0;
   min-height: 48px;
   padding: .5rem .85rem;
   border: 1px solid var(--sai-borde);
@@ -524,7 +526,7 @@ button {
 .pila-corta { display: grid; gap: .6rem; align-content: start; }
 .centrada { justify-items: center; text-align: center; }
 .angosta { max-width: 44rem; }
-.rejilla-2 { display: grid; gap: 0 1rem; }
+.rejilla-2 { display: grid; gap: 0 1rem; align-items: start; }
 @media (min-width: 600px) { .rejilla-2 { grid-template-columns: 1fr 1fr; } }
 .fila-accion { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .fila-botones { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
@@ -904,6 +906,12 @@ a.indicador:hover, a.mosaico-item:hover { border-color: var(--sai-violeta); }
 .empresa-menu a[aria-current="page"] { background: var(--sai-lila); color: var(--sai-violeta); }
 .empresa-nombre { font-weight: 700; color: var(--sai-suave); }
 .empresa-pagina { max-width: 64rem; margin: 0 auto; padding: 1rem 1rem 3rem; }
+.empresa-pagina .angosta { margin-inline: auto; }
+.empresa-pagina .empresa-acceso { width: min(30rem, 100%); margin: 1.5rem auto; }
+.empresa-aviso { display: flex; align-items: flex-start; gap: .65rem; min-height: 44px; }
+.empresa-aviso input { width: 20px; height: 20px; margin-top: .2rem; accent-color: var(--sai-violeta); flex: none; }
+.empresa-aviso label { cursor: pointer; line-height: 1.45; }
+.empresa-aviso .enlace-boton { min-height: auto; font: inherit; font-weight: 700; display: inline; vertical-align: baseline; }
 @media (min-width: 768px) { .empresa-pagina { padding: 1.5rem 2rem 3rem; } }
 @media (max-width: 640px) {
   .empresa-menu { order: 3; flex-basis: 100%; }
