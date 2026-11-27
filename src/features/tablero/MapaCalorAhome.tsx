@@ -2,7 +2,7 @@ import ahome from '@/features/tablero/ahome.geo.json'
 
 // Nivel de un sector (AGEB) según el futuro GET /analytics/heatmap. 'suprimido' = menos de 5 casos.
 export type NivelSector = 1 | 2 | 3 | 4 | 5 | 'suprimido'
-export type Vista = 'municipio' | 'los-mochis'
+export type Vista = 'municipio' | 'los-mochis' | 'puntos'
 
 type Anillo = number[][]
 type Sector = {
@@ -39,9 +39,52 @@ const agebs = (['rural', 'urbana'] as const).flatMap((tipo) => sectores.filter((
 const dibujo = agebs.map((s) => ({ ...s.properties, d: trazo(s) }))
 
 // Localidad 0001 de Ahome = Los Mochis.
-const CAJAS: Record<Vista, string> = {
+const CAJAS: Record<Exclude<Vista, 'puntos'>, string> = {
   municipio: caja([municipio]),
   'los-mochis': caja(agebs.filter((s) => s.properties.id.startsWith('2500100010'))),
+}
+
+function cajaPuntos(puntos: PuntoMapa[]): string {
+  if (!puntos.length) return CAJAS['los-mochis']
+  const ps = puntos.map((p) => proyectar([p.lon, p.lat]))
+  const xs = ps.map((p) => p[0])
+  const ys = ps.map((p) => p[1])
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
+  // Margen del 35 % (mínimo 6 unidades) y proporción 4:3 para que el mapa no quede como una franja.
+  const m = Math.max(6, (x1 - x0) * 0.35, (y1 - y0) * 0.35)
+  let [w, h] = [x1 - x0 + 2 * m, y1 - y0 + 2 * m]
+  if (w / h < 4 / 3) w = (h * 4) / 3
+  else h = (w * 3) / 4
+  return [(x0 + x1 - w) / 2, (y0 + y1 - h) / 2, w, h].map((n) => n.toFixed(1)).join(' ')
+}
+
+/** Proyecta los puntos y separa los que se enciman para que cada número se lea (solo es un ajuste visual). */
+function separar(puntos: PuntoMapa[], r: number) {
+  const ps = puntos.map((p, i) => {
+    const [x, y] = proyectar([p.lon, p.lat])
+    return { ...p, numero: i + 1, x, y }
+  })
+  const min = r * 2.3
+  for (let vuelta = 0; vuelta < 20; vuelta++) {
+    let movido = false
+    for (let i = 0; i < ps.length; i++) {
+      for (let j = i + 1; j < ps.length; j++) {
+        const [a, b] = [ps[i]!, ps[j]!]
+        let [dx, dy] = [b.x - a.x, b.y - a.y]
+        let d = Math.hypot(dx, dy)
+        if (d >= min) continue
+        if (d === 0) [dx, dy, d] = [1, 0, 1]
+        const empuje = (min - d) / 2
+        a.x -= (dx / d) * empuje
+        a.y -= (dy / d) * empuje
+        b.x += (dx / d) * empuje
+        b.y += (dy / d) * empuje
+        movido = true
+      }
+    }
+    if (!movido) break
+  }
+  return ps
 }
 
 function claseNivel(nivel: NivelSector | undefined): string {
@@ -49,15 +92,34 @@ function claseNivel(nivel: NivelSector | undefined): string {
   return nivel === 'suprimido' ? 'suprimido' : `calor-${nivel}`
 }
 
-export function MapaCalorAhome({ niveles = {}, vista = 'municipio' }: { niveles?: Record<string, NivelSector>; vista?: Vista }) {
-  // El rayado del patrón se escala con el acercamiento para verse igual en ambas vistas.
-  const raya = Number(CAJAS[vista].split(' ')[2]) / 150
+/** Lugar marcado con un número sobre el mapa (p. ej. puntos de atención). Nunca domicilios de personas. */
+export type PuntoMapa = { id: string; nombre: string; lat: number; lon: number }
+
+export function MapaCalorAhome({
+  niveles = {},
+  vista = 'municipio',
+  puntos = [],
+  activo,
+  onPunto,
+}: {
+  niveles?: Record<string, NivelSector>
+  vista?: Vista
+  puntos?: PuntoMapa[]
+  activo?: string
+  onPunto?: (id: string) => void
+}) {
+  // Vista «puntos»: encuadra los lugares marcados con un margen alrededor.
+  const viewBox = vista === 'puntos' ? cajaPuntos(puntos) : CAJAS[vista]
+  // El rayado del patrón y los marcadores se escalan con el acercamiento para verse igual en todas las vistas.
+  const ancho = Number(viewBox.split(' ')[2])
+  const raya = ancho / 150
+  const r = ancho / (vista === 'puntos' ? 28 : 24)
   return (
     <svg
       className="mapa"
-      viewBox={CAJAS[vista]}
+      viewBox={viewBox}
       role="img"
-      aria-label={vista === 'municipio' ? 'Mapa del municipio de Ahome por AGEB' : 'Mapa de Los Mochis por AGEB'}
+      aria-label={vista === 'municipio' ? 'Mapa del municipio de Ahome por AGEB' : vista === 'puntos' ? 'Mapa de los lugares marcados' : 'Mapa de Mochis por AGEB'}
     >
       <defs>
         <pattern id="mapa-suprimido" width={raya} height={raya} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -71,6 +133,23 @@ export function MapaCalorAhome({ niveles = {}, vista = 'municipio' }: { niveles?
           <title>AGEB {id}</title>
         </path>
       ))}
+      {separar(puntos, r)
+        .sort((a, b) => Number(a.id === activo) - Number(b.id === activo)) // el seleccionado se dibuja encima
+        .map(({ id, nombre, numero, x, y }) => (
+          <g
+            key={id}
+            className={activo === id ? 'mapa-punto activo' : 'mapa-punto'}
+            data-punto={id}
+            transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}
+            onClick={onPunto && (() => onPunto(id))}
+          >
+            <title>{nombre}</title>
+            <circle r={r} />
+            <text fontSize={r * 1.2} textAnchor="middle" dominantBaseline="central">
+              {numero}
+            </text>
+          </g>
+        ))}
     </svg>
   )
 }

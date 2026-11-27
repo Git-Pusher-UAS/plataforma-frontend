@@ -4,7 +4,7 @@ import { MapaCalorAhome, type Vista } from '@/features/tablero/MapaCalorAhome'
 
 const VISTAS: { valor: Vista; texto: string }[] = [
   { valor: 'municipio', texto: 'Municipio' },
-  { valor: 'los-mochis', texto: 'Los Mochis' },
+  { valor: 'los-mochis', texto: 'Mochis' },
 ]
 
 const LEYENDA = [
@@ -29,7 +29,7 @@ export function TableroPage() {
       <article className="tarjeta tarjeta-mapa" aria-labelledby="mapa-titulo">
         <div className="mapa-titulo">
           <div>
-            <h2 id="mapa-titulo">Mapa de calor de Ahome</h2>
+            <h2 id="mapa-titulo">{vista === 'los-mochis' ? 'Mochis' : 'Mapa de calor de Ahome'}</h2>
             <p className="texto-suave">Casos atendidos por AGEB. Nunca se muestran domicilios ni puntos individuales.</p>
           </div>
 

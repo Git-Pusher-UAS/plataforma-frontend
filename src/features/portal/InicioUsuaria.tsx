@@ -6,6 +6,7 @@ import { useMisPostulaciones } from '@/features/bolsa/api'
 import { entrevistaPorConfirmar } from '@/features/bolsa/Usuaria'
 import { useEncuestasPendientes } from '@/features/encuestas/api'
 import { useSesion } from '@/features/identidad/sesion'
+import { MapaAtencion } from '@/features/portal/MapaAtencion'
 
 /** U-05 · Inicio. El botón de ayuda es lo primero y lo más grande. */
 export function InicioUsuariaPage() {
@@ -54,6 +55,7 @@ export function InicioUsuariaPage() {
           <ClipboardList size={26} aria-hidden="true" /> Mis pendientes
           {pendientes > 0 && <span className="insignia">{pendientes}</span>}
         </Link>
+        <MapaAtencion />
       </div>
     </section>
   )

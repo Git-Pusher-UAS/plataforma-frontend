@@ -208,6 +208,29 @@ describe('rutas', () => {
     expect(screen.getByText(/Estamos revisando tus datos/)).toBeInTheDocument()
   })
 
+  it('el inicio de la usuaria muestra los espacios de atención con su teléfono', async () => {
+    renderAt('/u/inicio', undefined, { alias: 'María' })
+    expect(await screen.findByRole('heading', { name: 'Espacios de atención en Ahome' })).toBeInTheDocument()
+    const lista = screen.getByRole('list', { name: 'Espacios de atención presencial' })
+    expect(lista).toHaveTextContent('Secretaría de las Mujeres de Ahome (SEMUJERES)')
+    expect(lista).toHaveTextContent('Centro Regional de Justicia para las Mujeres en Ahome (CJM)')
+    expect(lista).toHaveTextContent('Palacio Municipal de Ahome')
+    expect(lista).toHaveTextContent('Calle Guillermo Prieto #728 Sur')
+    expect(screen.getByRole('link', { name: /Línea Violeta/ })).toHaveAttribute('href', 'tel:6681025080')
+    expect(screen.getByRole('link', { name: '668 100 0083' })).toHaveAttribute('href', 'tel:6681000083')
+  })
+
+  it('al elegir el mapa de Mochis el título dice Mochis (usuaria y administración)', async () => {
+    const u = userEvent.setup()
+    const { unmount } = renderAt('/u/inicio', undefined, { alias: 'María' })
+    await u.click(await screen.findByRole('button', { name: 'Mochis' }))
+    expect(screen.getByRole('heading', { name: 'Mochis' })).toBeInTheDocument()
+    unmount()
+    renderAt('/tablero', persona('administracion'))
+    await u.click(await screen.findByRole('button', { name: 'Mochis' }))
+    expect(screen.getByRole('heading', { name: 'Mochis' })).toBeInTheDocument()
+  })
+
   it('la usuaria entra con su número de celular', async () => {
     const u = userEvent.setup()
     renderAt('/u/entrar')
