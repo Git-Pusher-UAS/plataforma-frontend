@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react'
+import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from 'react'
 import { Menu, PanelLeftOpen, X } from 'lucide-react'
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router'
 import { MENU_POR_ROL, barraInferior } from '@/app/nav'
@@ -43,7 +43,7 @@ function useVencimientoPorInactividad() {
 }
 
 /** Panel del personal: menú según el rol, etiqueta de área visible, Salir y Necesito ayuda siempre a la vista. */
-export function Layout() {
+export function Layout({ children }: { children?: ReactNode }) {
   const { personal } = useSesion()
   const { pathname } = useLocation()
   const [abierto, setAbierto] = useState(false) // cajón del menú en celular
@@ -158,7 +158,7 @@ export function Layout() {
         </header>
 
         <main className={personal.rol === 'administracion' ? 'pagina admin-pagina' : 'pagina'}>
-          <Outlet />
+          {children ?? <Outlet />}
         </main>
       </div>
 

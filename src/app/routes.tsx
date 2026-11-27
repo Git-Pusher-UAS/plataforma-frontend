@@ -1,6 +1,6 @@
 import { Navigate, type RouteObject } from 'react-router'
 import { Layout } from '@/app/Layout'
-import { HomePage, NotFoundPage, RequiereRol } from '@/app/pages'
+import { NotFoundPage, RaizPage, RequiereRol } from '@/app/pages'
 import { BitacoraPage, OpinionPage, PersonalPage, ReportesPage, SolicitudesPage } from '@/features/administracion/pages'
 import { AyudaActivadaPage, CancelarAlertaPage, MantenerPage } from '@/features/ayuda/AyudaUsuaria'
 import { DirectorioPage } from '@/features/ayuda/Directorio'
@@ -46,6 +46,8 @@ import { PortalLayout, RequiereUsuaria } from '@/features/portal/PortalLayout'
 const ATENCION = ['trabajo-social', 'psicologia', 'juridico'] as const
 
 export const routes: RouteObject[] = [
+  { path: '/', element: <RaizPage /> }, // U-01 sin sesión · P-05 / K-01 / D-01 con sesión de personal
+
   // ---------- A · Portal de usuarias (celular) ----------
   {
     path: '/u',
@@ -118,7 +120,6 @@ export const routes: RouteObject[] = [
   {
     element: <Layout />,
     children: [
-      { path: '/', element: <HomePage /> }, // P-05 · K-01 · D-01
       { path: '/cuenta', element: <MiCuentaPage /> }, // P-06
       { path: '/ayuda', element: <DirectorioPage volver="/" /> },
       {
