@@ -102,7 +102,7 @@ export function Layout() {
         {menu.map(({ to, label, icon: Icon, inferior }) => (
           <NavLink key={to} to={to} end={exacta(to)} className={inferior ? 'menu-item oculto-en-movil' : 'menu-item'} onClick={() => setAbierto(false)}>
             <Icon size={20} strokeWidth={2} aria-hidden="true" />
-            {label}
+            <span className="menu-texto">{label}</span>
           </NavLink>
         ))}
 

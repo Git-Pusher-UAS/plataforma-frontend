@@ -1,11 +1,11 @@
 # SAI — Flujo de pantallas del MVP
 
 **Versión:** 0.1 — diseño del flujo del frontend
-**Base:** `01_SRS_A_MVP` (RF-01 a RF-14, RNF y reglas de negocio) y `ENDPOINTS_SAI_MVP` v1.1 (41 operaciones)
-**Alcance:** únicamente el personal de la Secretaría. El MVP no incluye portal de usuarias, citas, tareas, adjuntos, cursos, empleo ni encuestas, así que no hay pantallas para ellos.
+**Base:** `01_SRS_A_MVP` (RF-01 a RF-14, RNF y reglas de negocio), `ENDPOINTS_SAI_MVP` v1.1 (41 operaciones) y, para la Parte B, `Paso1_Definicion_Proyecto_v2`
+**Alcance:** las secciones 1 a 7 (**Parte A**) cubren al personal de la Secretaría dentro del contrato del MVP A. Las secciones 8 a 12 (**Parte B**) registran las pantallas que el Paso 1 pide y ese contrato no cubre: el portal de la usuaria y funciones adicionales del personal. **Las pantallas de la Parte B todavía no tienen endpoints.**
 **Archivo complementario:** `PANTALLAS_ENDPOINTS_SAI_MVP.md` (qué endpoint llama cada pantalla, headers, formularios y validaciones).
 
-Este documento registra **cómo se mueve una persona por la aplicación**. Los nombres de pantalla (`P-xx`) y las rutas del cliente son propuestas del frontend; las rutas de la API son las del documento de endpoints y no se modifican aquí.
+Este documento registra **cómo se mueve una persona por la aplicación**. Los nombres de pantalla y las rutas del cliente son propuestas del frontend; las rutas de la API son las del documento de endpoints y no se modifican aquí. Prefijos: `P-xx` pantallas del personal en el MVP A, `U-xx` portal de la usuaria y `E-xx` extensiones del personal (Parte B).
 
 ---
 
@@ -429,3 +429,260 @@ Alineado con los cuatro días del SRS (sección 12):
 | 4 | P-60, P-06, P-07, P-71, P-73, ajustes de accesibilidad y ensayo en teléfono | Pantallas de apoyo, pruebas y congelamiento del alcance |
 
 Si el tiempo no alcanza, el orden de recorte es: P-73, P-71, P-60 (se usan cuentas sembradas), P-07. El recorrido de demostración exige: P-01 a P-03, P-11 a P-14, P-16, P-30, P-41, P-70 y P-72.
+
+---
+
+# Parte B — Pantallas fuera del contrato del MVP A
+
+## 8. Qué pide el Paso 1 y qué cubre ya la Parte A
+
+El Paso 1 define dos tipos de usuario: **personal** y **usuaria**. La Parte A cubre al personal dentro del contrato del MVP A. Esta parte registra lo demás: el portal de la usuaria y las funciones del personal que el Paso 1 menciona pero que el SRS A difiere (citas, tareas, canalización externa, exportaciones) o no recoge (órdenes de protección).
+
+> **Ninguna pantalla de esta parte tiene endpoints en el contrato actual.** El documento de endpoints prohíbe registrar rutas de portal, agenda, cursos, empleo, encuestas, avisos y exportaciones en el MVP A (§11.1). Las capacidades que habría que definir están en `PANTALLAS_ENDPOINTS_SAI_MVP.md`, sección 6.
+
+### 8.1 Correspondencia entre el Paso 1 y las pantallas
+
+| Elemento del Paso 1 | Pantalla(s) | Parte | Estado en el contrato A |
+|---|---|---|---|
+| Gestión de usuarios y roles (HU-19) | P-60 | A | Cubierto |
+| Expediente único y secciones por departamento | P-14, P-15, P-16 | A | Cubierto |
+| Ver solo lo que corresponde (HU-01) | P-10, P-14 | A | Cubierto |
+| Duplicados por CURP (HU-02) | P-11, P-13 | A | Cubierto |
+| Consentimiento informado (HU-03) | P-12, P-17 | A | Cubierto |
+| Datos sensibles ocultos (HU-04) | P-14 (enmascarado y revelar) | A | Cubierto |
+| Bitácora y alertas (HU-05) | P-70, P-71 | A | Cubierto |
+| Acceso seguro del personal (HU-06) | P-01 a P-04 | A | Cubierto |
+| Canalizar a otro departamento (HU-07) | P-14, P-30 | A | Cubierto |
+| Notas sin conexión (HU-08) | P-40, P-41 | A | Cubierto |
+| Protección web y del dispositivo (HU-09, HU-10) | Transversal, sin pantalla propia | A | Cubierto |
+| Tablero y mapa de calor (HU-15, HU-16) | P-72, P-73 | A | Cubierto |
+| Buscar y filtrar expedientes (HU-18) | P-10 | A | Parcial: filtros sí, búsqueda por texto no |
+| Directorio y rutas de atención sin conexión (HU-21) | P-50, P-51 | A | Cubierto |
+| Recursos y teléfonos de apoyo para la usuaria (HU-22) | P-50 (pública, sin sesión) y U-06 | A / B | Cubierto: reutiliza API-039 |
+| Tareas, citas y recordatorios; recordatorios de casos sin contacto (HU-17) | E-01, E-02, E-03 | B | Diferido en el SRS A |
+| Canalizar a una instancia externa (HU-07) | E-05 | B | Diferido en el SRS A |
+| Seguimiento de órdenes de protección (HU-14) | E-04 | B | No aparece en el SRS A |
+| Exportar reportes anonimizados (HU-20) | E-06 | B | Diferido en el SRS A |
+| Acceso de la usuaria a su información (HU-11) | U-01 a U-05, U-12 | B | Diferido: portal |
+| Pedir ayuda sin iniciar sesión (HU-12) | U-07, U-08 y E-07 | B | La Parte A solo cubre el botón del **personal** (P-51) |
+| Discreción en el dispositivo de la usuaria (HU-13) | Transversal en el portal y U-04 | B | Diferido: portal |
+| Comunicación discreta con la usuaria | E-11 y U-03 | B | Diferido |
+| Encuestas de seguimiento (HU-23) | U-11, E-10 | C | Diferido |
+| Cursos y vacantes (HU-24) | U-09, U-10, E-08, E-09 | C | Diferido |
+
+**Diferencias entre el Paso 1 y el SRS A** que el equipo tiene que decidir: el Paso 1 pone tareas, citas, recordatorios y canalización externa dentro del **núcleo**, pero el SRS A los difiere. Mientras no se resuelva, este documento los trata como Parte B.
+
+### 8.2 Inventario de pantallas de la Parte B
+
+**Portal de la usuaria** (rutas bajo `/portal`, identidad y sesión separadas de las del personal)
+
+| ID | Pantalla | Ruta | Origen |
+|---|---|---|---|
+| U-01 | Activación presencial (primer uso) | `/portal/activar` | HU-11 |
+| U-02 | Acceso | `/portal/acceso` | HU-11 |
+| U-03 | Inicio | `/portal` | HU-11 |
+| U-04 | Mi perfil y preferencias | `/portal/perfil` | HU-11, HU-13 |
+| U-05 | Mis citas | `/portal/citas` | HU-11 |
+| U-06 | Recursos y teléfonos de apoyo | `/portal/recursos` | HU-22 |
+| U-07 | Pedir ayuda | `/portal/ayuda` | HU-12 |
+| U-08 | Mis contactos de confianza | `/portal/ayuda/contactos` | HU-12 |
+| U-09 | Cursos y charlas | `/portal/cursos` | HU-24 |
+| U-10 | Empleo | `/portal/empleo` | HU-24 |
+| U-11 | Encuestas | `/portal/encuestas` | HU-23 |
+| U-12 | Recuperar acceso | `/portal/recuperar` | HU-11 |
+
+**Extensiones del personal**
+
+| ID | Pantalla | Ruta | Quién | Origen |
+|---|---|---|---|---|
+| E-01 | Agenda: citas y tareas | `/agenda` | TrabajoSocial, Psicología, Jurídico | HU-17, núcleo del Paso 1 |
+| E-02 | Nueva cita o tarea | Diálogo desde el expediente o la agenda | Los mismos | HU-17 |
+| E-03 | Recordatorios y casos sin contacto reciente | Módulo en Inicio y en E-01 | Los mismos | HU-17 |
+| E-04 | Órdenes de protección | `/expedientes/:recordId/ordenes-proteccion` | Asignados | HU-14 |
+| E-05 | Canalización a instancia externa | Extiende el diálogo Canalizar y P-30 | Profesional asignado | HU-07 |
+| E-06 | Reportes y exportaciones | `/reportes` | Coordinación, Dirección, AdministraciónAnalítica | HU-20 |
+| E-07 | Bandeja de avisos de ayuda | `/avisos-ayuda` | Receptor de ayuda en turno | HU-12 |
+| E-08 | Cursos y visitas | `/capacitacion/cursos` | Capacitación | HU-24 |
+| E-09 | Vacantes y postulaciones | `/empleo` | Responsable de empleo | HU-24 |
+| E-10 | Encuestas | `/encuestas` | Responsable de encuestas | HU-23 |
+| E-11 | Mensajes y recordatorios a la usuaria | Diálogo desde el expediente o la agenda | Personal asignado | Comunicación discreta |
+
+---
+
+## 9. Portal de la usuaria
+
+### 9.1 Reglas propias del portal
+
+1. **Identidad y sesión separadas.** Una sesión del personal no sirve en `/portal`, ni a la inversa. Las dos poblaciones no comparten menú ni cookie.
+2. **La usuaria nunca ve el expediente interno.** Ni notas, ni secciones, ni estado clínico. Solo su perfil, sus citas y los recursos.
+3. **Validación sencilla**, adecuada para una situación de emergencia y para quien no tiene experiencia técnica (PIN o validación del dispositivo, por definir en la entrevista). La CURP no es contraseña, y la activación es presencial y de un solo uso.
+4. **Ayuda sin sesión.** El botón funciona antes de iniciar sesión y sin conexión; abre el marcador del teléfono.
+5. **La ayuda no promete.** No se dice que el aviso llegó ni que alguien acudirá. Sin internet no se transmite ubicación. La ubicación y el aviso a contactos se envían solo con permiso previo.
+6. **Discreción.** Nombre e ícono neutros, notificaciones de texto genérico con opción de silenciar, salida rápida en todas las pantallas y **ningún historial visible de alertas enviadas** en el dispositivo.
+7. **Lenguaje claro.** Texto base de 17 px, controles de 48 px, diseño desde 360 px y frases sin tecnicismos.
+8. **Sin conexión** solo funcionan los recursos (copia local) y la llamada. Citas, cursos, empleo y encuestas requieren conexión.
+
+### 9.2 Navegación
+
+En el teléfono, una barra inferior con cinco opciones de nombre neutro; el botón de ayuda es siempre visible.
+
+| Opción | Pantalla |
+|---|---|
+| Inicio | U-03 |
+| Agenda | U-05 |
+| Recursos | U-06 |
+| Ayuda | U-07 |
+| Perfil | U-04 |
+
+Cursos, empleo y encuestas aparecen como atajos en el Inicio si la Secretaría los habilita.
+
+```mermaid
+flowchart TD
+  A["U-02 Acceso"] --> B["U-03 Inicio"]
+  B --> C["U-05 Mis citas"]
+  B --> D["U-06 Recursos"]
+  B --> E["U-07 Pedir ayuda"]
+  B --> F["U-09 Cursos"]
+  B --> G["U-10 Empleo"]
+  B --> H["U-11 Encuestas"]
+  B --> I["U-04 Perfil y preferencias"]
+  E --> J["U-08 Contactos de confianza"]
+```
+
+### 9.3 Acceso y activación (HU-11)
+
+```mermaid
+flowchart TD
+  A["U-01 Activación presencial, un solo uso"] -->|"define su validación"| C["U-03 Inicio"]
+  B["U-02 Acceso"] -->|"validación correcta"| C
+  B -->|"olvidó su acceso"| D["U-12 Recuperar acceso con el personal"]
+  B -->|"intentos fallidos"| E["Espera temporal"]
+  E --> B
+```
+
+- **El alta la hace el personal de forma presencial.** La usuaria recibe una activación de un solo uso y, en el primer uso, define su propia validación (U-01). No hay registro abierto.
+- **U-12** es informativa: explica que la recuperación se hace con el personal y muestra el directorio. No hay restablecimiento automático.
+
+### 9.4 Pedir ayuda (HU-12)
+
+```mermaid
+flowchart TD
+  A["Botón Necesito ayuda, visible en todo el portal y sin sesión"] -->|"mantener 2 a 3 segundos o confirmación alternativa"| B["U-07 Opciones de ayuda"]
+  B -->|"Llamar"| C["Se abre el marcador del teléfono"]
+  B -->|"Avisar con ubicación, solo con permiso previo"| D["Aviso enviado o en espera"]
+  B -->|"Avisar a contactos, solo con consentimiento"| E["Aviso a contactos de confianza"]
+  D -->|"sin conexión"| F["Se registra al recuperar la conexión, sin ubicación"]
+```
+
+- **Llamar** siempre está disponible y no depende del servidor.
+- **Avisar** solo se ofrece si la usuaria dio permiso previo. La interfaz muestra "Aviso enviado" o "En espera de conexión" y, si el sistema lo informa, "Recibido por el equipo". **Nunca** "va en camino" ni "estás a salvo".
+- **U-08** es donde la usuaria elige y confirma a quién se puede avisar. Requiere su consentimiento explícito por cada contacto.
+
+### 9.5 Citas, recursos, cursos, empleo y encuestas
+
+- **U-05 Mis citas:** lista de citas propias con fecha, lugar y estado (programada, confirmada, realizada, no asistió). Si el contrato lo permite, confirmar o cancelar una cita programada o confirmada.
+- **U-06 Recursos:** mismo contenido que P-50 (directorio institucional con teléfonos, horarios y rutas de atención), con la navegación del portal. Disponible sin conexión.
+- **U-09 Cursos:** cursos publicados con calendario, cupo y estado de la inscripción; inscribirse y cancelar la inscripción.
+- **U-10 Empleo:** vacantes vigentes con filtros (sector, horario, tipo de empleo, ubicación) y postulación. Las empresas no tienen cuenta ni acceso.
+- **U-11 Encuestas:** encuestas asignadas a la usuaria, con redacción neutra y opción de silenciar los avisos. Una respuesta por asignación.
+- **U-04 Perfil y preferencias:** sus datos básicos y las preferencias de notificación (silenciar, texto genérico).
+
+---
+
+## 10. Extensiones del personal
+
+### 10.1 Agenda, tareas y recordatorios (E-01 a E-03, HU-17)
+
+- **E-01** muestra citas y tareas del día y de la semana, con el expediente asociado (por alias). Estados de una cita: `programada → confirmada → realizada` o `no_asistio`; se cancela desde programada o confirmada. No permite solapamientos.
+- **E-02** crea una cita o tarea desde el expediente o la agenda.
+- **E-03** reúne los **recordatorios de citas** y los **casos sin contacto reciente**, con plazos configurables. Aparece también en el Inicio.
+- La agenda sin conexión se contempla solo con datos mínimos de las citas propias.
+
+### 10.2 Órdenes de protección (E-04, HU-14)
+
+```mermaid
+flowchart TD
+  A["P-14 Resumen del expediente"] --> B["E-04 Órdenes de protección"]
+  B -->|"Registrar o renovar"| C["Formulario con vigencia"]
+  C --> B
+  B -->|"vigencia próxima a vencer"| D["Aviso en E-03 y en el Inicio"]
+  E["P-10 Lista de expedientes"] -->|"casos con orden vigente"| F["Aparecen priorizados"]
+```
+
+- Pestaña dentro del expediente: lista de órdenes con vigencia y estado (vigente, por vencer, vencida).
+- El aviso se emite con **anticipación configurable**. Los casos con orden vigente se priorizan en P-10.
+- Los campos, estados y plazos se definen con la Secretaría: es la pregunta 22 del documento de la entrevista.
+
+### 10.3 Canalización a instancia externa (E-05, HU-07)
+
+```mermaid
+flowchart TD
+  A["Canalizar: elegir instancia externa"] --> B{"¿Hay consentimiento específico vigente?"}
+  B -->|"no"| C["P-17 Registrar consentimiento"]
+  C --> B
+  B -->|"sí"| D["Enviar resumen mínimo"]
+  D --> E["P-30 Estado: enviada, recibida, atendida"]
+```
+
+- Extiende el diálogo Canalizar de la Parte A con un catálogo de instancias externas.
+- **Compartir con otra instancia exige un consentimiento específico registrado**, salvo lo que la normativa establezca. Si falta, la pantalla lleva a registrarlo antes de enviar.
+- Se comparte solo lo necesario para esa instancia. El caso muestra el estatus: enviada, recibida, atendida.
+- No hay integración automática con otras instituciones: la comunicación es un registro dentro de la plataforma.
+
+### 10.4 Bandeja de avisos de ayuda (E-07)
+
+```mermaid
+flowchart TD
+  A["E-07 Bandeja de avisos"] -->|"nuevo aviso con alerta sonora"| B["Acusar recibo"]
+  B --> C["En atención"]
+  C --> D["Cerrar con nota administrativa"]
+  A -->|"sin turno"| E["Sin acceso a la bandeja"]
+```
+
+- Solo quien está de turno como receptor ve la bandeja. El permiso no da lectura de expedientes.
+- Estados del aviso: `recibida → en_atencion → cerrada`. Cerrar es un acto **administrativo** y no certifica que la persona esté a salvo; la pantalla no lo afirma.
+- Una alerta sonora y visual avisa de un aviso nuevo; no depende de que la PWA esté en segundo plano.
+
+### 10.5 Reportes y exportaciones (E-06, HU-20)
+
+- Elegir tipo de reporte, periodo y filtros, con **vista previa** que ya muestra la supresión de celdas pequeñas.
+- Exportar solo datos **agregados y anonimizados**; nunca identificadores ni expedientes.
+- Cada exportación queda registrada en la bitácora.
+
+### 10.6 Cursos, empleo y encuestas del lado del personal (E-08, E-09, E-10)
+
+- **E-08 Capacitación:** crear, publicar o cancelar cursos y charlas; calendario, cupo, visitas y registro de asistencia mínimo. Sin acceso a expedientes.
+- **E-09 Empleo:** crear, publicar y cerrar vacantes de empresas verificadas, con vigencia; revisar postulaciones (`pendiente`, `en_revision`, `canalizada`, `cerrada`). Las empresas no tienen cuenta.
+- **E-10 Encuestas:** crear versiones, publicarlas, asignarlas a un caso (solo un profesional autorizado) y ver agregados. Una encuesta publicada no cambia su estructura.
+
+### 10.7 Mensajes y recordatorios a la usuaria (E-11)
+
+- Diálogo que usa **plantillas de redacción neutra** para recordar una cita o pedir una respuesta.
+- La notificación que llega al teléfono de la usuaria lleva texto genérico y puede silenciarse.
+- Las notificaciones push tienen límites por plataforma (en iOS solo con la PWA instalada); las capacidades reales se confirman al implementarlas.
+
+---
+
+## 11. Capacidades de API que faltan para la Parte B
+
+Ninguna ruta de esta parte existe. En `PANTALLAS_ENDPOINTS_SAI_MVP.md`, sección 6, está la lista de lo que habría que definir pantalla por pantalla. Dos reglas:
+
+1. **No registrar estas rutas en el MVP A**: el documento de endpoints lo prohíbe expresamente.
+2. Cuando se definan en OpenAPI, seguir la misma convención (recursos en inglés, plural, guiones, sin prefijo `/staff`) y mantener separadas las identidades del personal y de la usuaria.
+
+Hay una excepción: **U-06 reutiliza API-039**, porque el directorio es público.
+
+---
+
+## 12. Prioridad sugerida para la Parte B
+
+Esta parte queda fuera de los cuatro días del MVP. Si se aborda después, un orden razonable según riesgo y reutilización:
+
+| Orden | Pantallas | Por qué primero |
+|---|---|---|
+| 1 | U-06 (con P-50) | Ya tiene endpoint público; no exige cuenta de usuaria |
+| 2 | U-01, U-02, U-03, U-12 | Sin cuentas de usuaria no hay nada más del portal |
+| 3 | U-07, U-08, E-07 | La ayuda es el caso de mayor riesgo, y exige definir antes un receptor con horario y escalamiento |
+| 4 | E-01, E-02, E-03, U-05, U-04, E-11 | Citas y recordatorios dependen de la agenda |
+| 5 | E-04, E-05, E-06 | Órdenes de protección, canalización externa y exportaciones |
+| 6 | U-09, U-10, U-11, E-08, E-09, E-10 | Cursos, empleo y encuestas; solo si la Secretaría los pide |
